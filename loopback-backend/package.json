@@ -1,13 +1,12 @@
 {
-  "name": "15-minutos-backend",
-  "version": "1.1.0",
+  "name": "Backend SisPlag",
+  "version": "0.1.0",
   "main": "server/server.js",
   "scripts": {
     "start": "node .",
     "pretest": "eslint .",
     "posttest": "nsp check",
-    "dev":"export NODE_ENV=development && node .",
-    "services":"clear && lb-ng server/server.js lb-services"
+    "dev": "export NODE_ENV=development && node ."
   },
   "dependencies": {
     "async": "^2.1.5",
@@ -43,5 +42,5 @@
     "url": ""
   },
   "license": "UNLICENSED",
-  "description": "15-minutos-backend"
+  "description": "Tesis sistema para comparacion y deteccion de plagio de documentos científicos."
 }
