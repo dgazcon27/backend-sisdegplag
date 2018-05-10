@@ -12,9 +12,9 @@ module.exports = function(Document) {
 		var AccessToken = app.models.AccessToken;
 		var error;
 		if (process.env.NODE_ENV === 'development') {
-			Container.upload(req, res, { container: 'documents' }, cb())
+			Container.upload(req, res, { container: 'documents' }, cb)
 		} else {
-			Container.upload(req, res, { container: 'documents' }, cb())
+			Container.upload(req, res, { container: 'documents' }, cb)
 		}
 	}
 	/* Remote Methods */
