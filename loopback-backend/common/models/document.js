@@ -36,9 +36,8 @@ module.exports = function(Document) {
 	function readDocument(url) {
 		var fs = require("fs");
 		var pdfreader = require('pdfreader');
-		// var docu = '/home/deadline004/Documents/Daniel/Code/storage/documents/text_23445345.pdf'
-		var docu = config.storage+'/documents/'+url
-		console.log(docu)
+		var docu = '/home/deadline004/Documents/Daniel/Code/storage/documents/words_8.pdf'
+		// var docu = config.storage+'/documents/'+url
 		var i = 0
 		var rows = {}
 		var defer = new promise((resolve, reject) => {
@@ -48,8 +47,7 @@ module.exports = function(Document) {
 					printRows(rows)
 					.then(r=>{
 						var response = {text:r}
-						console.log(response)
-						resolve()
+						resolve(response)
 					})
 					.catch(e => reject(e))
 				} else if(item.text) {
@@ -78,20 +76,43 @@ module.exports = function(Document) {
 	}
 
 	function generateNgrams(n, text) {
-		// body...
+		// number of ngrams
+		var x = text.length - (n-1);
+		var ngram = []
+		var gram = []
+		for(var i = 0; i< x; i++) {
+			gram.push(text[i]);
+			gram.push(text[i+1]);
+			gram.push(text[i+2]);
+			ngram.push(gram)
+			gram = []
+		}
+		
+		console.log(ngram)
+		return ngram;
+
+ 	}
+
+	Document.test = function test(cb) {
+		readDocument('')
+		.then(res => {
+			generateNgrams(3, res.text.toLowerCase().split(" "))
+			cb()
+		})
+		.catch(err => cb(err, null))
 	}
 
-	// Document.remoteMethod('readDocument', {
-	// 	http: {
-	// 		path: '/read-document',
-	// 		verb: 'get'
-	// 	},
-	// 	accepts: [],
-	// 	return: {
-	// 		arg: 'object',
-	// 		root:true
-	// 	}
-	// });
+	Document.remoteMethod('test', {
+		http: {
+			path: '/test',
+			verb: 'get'
+		},
+		accepts: [],
+		return: {
+			arg: 'object',
+			root:true
+		}
+	});
 
 	Document.remoteMethod('upload',{
 		http: { 
