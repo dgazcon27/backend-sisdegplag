@@ -5,6 +5,7 @@ module.exports = function(Document) {
 	var config = JSON.parse(fs.readFileSync('server/config.json', 'utf8'));
 	var promise = require('promise');
 	var app;
+	var rootDoc = config.documentsRoot;
 
 	Document.on('attached', function (a) {
 		app = a;
@@ -19,7 +20,7 @@ module.exports = function(Document) {
 		}, function (err, obj) {
 			if (err) { console.log(err) }
 			readDocument(file.name)
-			.then(r => next())
+			.then(r => compareText(file.name ,generateNgrams(3, res.text.toLowerCase().split(" "))))
 			.catch(e => next(e))
 			console.log('Document data Created: ' + obj.url)
 		});
@@ -33,15 +34,52 @@ module.exports = function(Document) {
 	}
 	/* Remote Methods */
 
+	
+
+	Document.test = function test(cb) {
+		readDocument('')
+		.then(res => {
+
+			compareText(generateNgrams(3, res.text.toLowerCase().split(" ")))
+			cb()
+		})
+		.catch(err => cb(err, null))
+	}
+
+	function compareText(url, arrayOfText) {
+
+		var defer = new promise((resolve, reject) => {
+			Document.find(
+				function (err, res) {
+					if (err) {
+						reject(err)
+					} else {
+						if (res.length) {
+							// compare text
+							res.forEach(item => {
+								if (item.url != url) {
+									
+								}
+							})
+						} else {
+							resolve()
+						}
+					}
+				}
+			)
+		})
+
+
+		return defer;
+	}
+
 	function readDocument(url) {
 		var fs = require("fs");
 		var pdfreader = require('pdfreader');
-		var docu = '/home/deadline004/Documents/Daniel/Code/storage/documents/words_8.pdf'
-		// var docu = config.storage+'/documents/'+url
 		var i = 0
 		var rows = {}
 		var defer = new promise((resolve, reject) => {
-			new pdfreader.PdfReader().parseFileItems(docu, function(err, item){
+			new pdfreader.PdfReader().parseFileItems(rootDoc+url, function(err, item){
 				if (item == undefined) {
 					// finish read document
 					printRows(rows)
@@ -88,19 +126,9 @@ module.exports = function(Document) {
 			gram = []
 		}
 		
-		console.log(ngram)
 		return ngram;
 
  	}
-
-	Document.test = function test(cb) {
-		readDocument('')
-		.then(res => {
-			generateNgrams(3, res.text.toLowerCase().split(" "))
-			cb()
-		})
-		.catch(err => cb(err, null))
-	}
 
 	Document.remoteMethod('test', {
 		http: {
