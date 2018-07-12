@@ -18,11 +18,19 @@ module.exports = function(Document) {
 		Document.create({
 				url: file.name
 		}, function (err, obj) {
-			if (err) { console.log(err) }
-			readDocument(file.name)
-			.then(r => compareText(file.name ,generateNgrams(3, res.text.toLowerCase().split(" "))))
-			.catch(e => next(e))
-			console.log('Document data Created: ' + obj.url)
+			if (err) { 
+				console.log(err) 
+			} else {
+				readDocument(file.name)
+				.then(r => {
+					compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
+					.then(res => {
+						next()
+					})
+					.catch(e => next(e))
+				})
+				.catch(e => next(e))
+			}
 		});
 		// next();
 	});
@@ -41,24 +49,36 @@ module.exports = function(Document) {
 		.then(res => {
 
 			compareText(generateNgrams(3, res.text.toLowerCase().split(" ")))
-			cb()
+			cb(null, {})
 		})
 		.catch(err => cb(err, null))
 	}
 
 	function compareText(url, arrayOfText) {
-
+		const urlstore = rootDoc;
 		var defer = new promise((resolve, reject) => {
 			Document.find(
 				function (err, res) {
 					if (err) {
 						reject(err)
 					} else {
-						if (res.length) {
+						if (res.length > 0) {
 							// compare text
 							res.forEach(item => {
 								if (item.url != url) {
-									
+									var docu = urlstore+item.url;
+									readDocument(docu)
+									.then(re => {
+
+									})
+									.catch(er => reject(er))
+									arrayOfText.forEach(it => {
+										console.log(it)
+									})
+									resolve()
+								} else {
+									console.log('document repeated')
+									resolve()
 								}
 							})
 						} else {

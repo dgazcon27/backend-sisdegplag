@@ -1,0 +1,45 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../node_modules/loopback-ds-timestamp-mixin",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "mysql_security",
+    "public": false
+  },
+  "AccessToken": {
+    "dataSource": "mysql_security",
+    "public": true
+  },
+  "ACL": {
+    "dataSource": "mysql_security",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "mysql_security",
+    "public": true
+  },
+  "Role": {
+    "dataSource": "mysql_security",
+    "public": true
+  },
+  "user": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "container": {
+    "dataSource": "storage",
+    "public": true
+  }
+}

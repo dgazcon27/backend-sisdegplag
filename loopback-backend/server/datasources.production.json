@@ -1,0 +1,66 @@
+{
+
+  "db": {
+
+    "name": "db",
+
+    "connector": "memory"
+
+  },
+
+  "mysql_corp": {
+
+    "host": "localhost",
+
+    "port": 3306,
+
+    "url": "",
+
+    "database": "15-minutos-backend",
+
+    "password": "15.10#Mysql.",
+
+    "name": "mysql_corp",
+
+    "user": "15minutos",
+
+    "connector": "mysql"
+
+  },
+
+  "mysql_security": {
+
+    "host": "localhost",
+
+    "port": 3306,
+
+    "url": "",
+
+    "database": "15-minutos-backend-security",
+
+    "password": "15.10#Mysql.",
+
+    "name": "mysql_security",
+
+    "user": "15minutos",
+
+    "connector": "mysql"
+
+  },
+
+  "storage": {
+
+    "name": "storage",
+
+    "connector": "loopback-component-storage",
+
+    "provider": "filesystem",
+
+    "root": "/var/www/apps/storage/",
+
+    "maxFileSize": "150000000"
+
+  }
+
+}
+

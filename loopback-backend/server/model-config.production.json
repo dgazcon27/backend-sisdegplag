@@ -1,0 +1,453 @@
+{
+  "_meta": {
+    "sources": [
+      "loopback/common/models",
+      "loopback/server/models",
+      "../common/models",
+      "./models"
+    ],
+    "mixins": [
+      "loopback/common/mixins",
+      "loopback/server/mixins",
+      "../node_modules/loopback-ds-timestamp-mixin",
+      "../common/mixins",
+      "./mixins"
+    ]
+  },
+  "User": {
+    "dataSource": "mysql_security",
+    "public": false
+  },
+  "AccessToken": {
+    "dataSource": "mysql_security",
+    "public": true
+  },
+  "ACL": {
+    "dataSource": "mysql_security",
+    "public": false
+  },
+  "RoleMapping": {
+    "dataSource": "mysql_security",
+    "public": true
+  },
+  "Role": {
+    "dataSource": "mysql_security",
+    "public": true
+  },
+  "notice": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "image": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "user": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "section": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "comment": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "reply": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "like": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "videoChannel": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "video": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "category": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "audio": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "audioChannel": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "read": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "playAudio": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "playVideo": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "adBlock": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "advertising": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "subSection": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "proposal": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "principalLog": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "tag": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "itemCroll": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHcomplaint": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHcompany": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHanswer": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHreview": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHcategory": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHproduct": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHproblem": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHcompanyCategory": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "CHcompanySubCategory": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "container": {
+    "dataSource": "storage",
+    "public": true
+  },
+  "source": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "guard": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "photoSection": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "homeFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "featureImageModel": {
+    "dataSource":  "mysql_corp",
+    "public": false
+  },
+  "featuredTextModel": {
+    "dataSource":  "mysql_corp",
+    "public": false
+  },
+  "homeSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "homeSection2": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "homePhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "homeItem": {
+    "dataSource":  "mysql_corp",
+    "public": true
+  },
+  "homeVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "entertainmentSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "entertainmentPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "entertainmentVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "entertainmentFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "lifeFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "lifePhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "lifeSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "lifeVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "southAmericaFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "southAmericaSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "southAmericaPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "southAmericaVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "sportsFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "sportsSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "sportsPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "sportsVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "eeuuFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "eeuuSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "eeuuPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "eeuuVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "centerAmericaFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "centerAmericaSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "centerAmericaPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "centerAmericaVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "caribeFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "caribeSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "caribePhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "caribeVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "worldFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "worldSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "worldPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "worldVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "economyFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "economySection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "economyPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "economyVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "opinionFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "opinionSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "opinionPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "opinionVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "cytFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "cytSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "cytPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "cytVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "othersFeatured": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "othersSection1": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "othersPhotos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "othersVideos": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "getMoreInput": {
+    "dataSource": "db",
+    "public": false
+  },
+  "semaphoreItem": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "semaphore": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "semaphoreItemInstance": {
+    "dataSource": "db",
+    "public": true
+  },
+  "curiosity": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "beautyProfileItem": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "beautyProfile": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "beautyProfileItemInstance": {
+    "dataSource": "db",
+    "public": true
+  },
+  "dayPhrase": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "author": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "DayCuriosity": {
+    "dataSource": "mysql_corp",
+    "public": true
+  },
+  "curiosityinstance": {
+    "dataSource": "db",
+    "public": false
+  },
+  "videosSection": {
+    "dataSource": "mysql_corp",
+    "public": true
+  }
+}

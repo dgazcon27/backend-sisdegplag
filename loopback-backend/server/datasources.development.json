@@ -1,0 +1,33 @@
+{
+  "db": {
+    "name": "db",
+    "connector": "memory"
+  },
+  "mysql_corp": {
+    "host": "localhost",
+    "port": 3306,
+    "url": "",
+    "database": "aduanali_dev",
+    "password": "E8ug?S1(V]m0",
+    "name": "mysqlDs",
+    "user": "aduanali_dev",
+    "connector": "mysql"
+  },
+  "mysql_security": {
+    "host": "localhost",
+    "port": 3306,
+    "url": "",
+    "database": "15-minutos-backend-security-dev",
+    "password": "",
+    "name": "aduanali_secure-dev",
+    "user": "aduanali_dev",
+    "connector": "mysql"
+  },
+  "storage": {
+    "name": "storage",
+    "connector": "loopback-component-storage",
+    "provider": "filesystem",
+    "root": "/home/daniel/Documentos/Proyectos/15-minutos/storage",
+    "maxFileSize": "550000000"
+  }
+}
