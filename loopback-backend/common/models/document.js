@@ -23,7 +23,7 @@ module.exports = function(Document) {
 			} else {
 				readDocument(file.name)
 				.then(r => {
-					compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
+					compareText(file.name ,generateNgrams(3, r.text))
 					.then(res => {
 						next()
 					})
@@ -47,8 +47,6 @@ module.exports = function(Document) {
 	Document.test = function test(cb) {
 		readDocument('')
 		.then(res => {
-
-			compareText(generateNgrams(3, res.text.toLowerCase().split(" ")))
 			cb(null, {})
 		})
 		.catch(err => cb(err, null))
@@ -57,30 +55,50 @@ module.exports = function(Document) {
 	function compareText(url, arrayOfText) {
 		const urlstore = rootDoc;
 		var defer = new promise((resolve, reject) => {
-			Document.find(
-				function (err, res) {
+			Document.find({
+					where: {
+						url:{neq:url}
+					}
+
+				},function (err, res) {
 					if (err) {
 						reject(err)
 					} else {
 						if (res.length > 0) {
-							// compare text
-							res.forEach(item => {
-								if (item.url != url) {
-									var docu = urlstore+item.url;
-									readDocument(docu)
-									.then(re => {
-
+							// // compare text
+							
+							var promiseList = res.map(item => {
+								return new promise((res, rej) => {
+									readDocument(item.url)
+									.then(r => {
+										var record = []
+										var _3gram = generateNgrams(3,r.text.toLowerCase().split(" "))
+										for(var i = 0; i< arrayOfText.length; i++) {
+											var counted = 0
+											var text1  = arrayOfText[i]
+											for(var j = 0;j < _3gram.length;j++) {
+												var text2 = _3gram[j]
+												if (text1[0] == text2[0] && text1[1] == text2[1] && text1[2] == text2[2]) {
+													counted++
+												}
+											}
+											record.push({text:text1, count:counted})
+											counted = 0
+										}
+										res()
+										
 									})
-									.catch(er => reject(er))
-									arrayOfText.forEach(it => {
-										console.log(it)
+									.catch(e => {
+										console.log(e)
+										rej(e)
 									})
-									resolve()
-								} else {
-									console.log('document repeated')
-									resolve()
-								}
+								})
 							})
+
+							promise.all(promiseList)
+							.then(respon => resolve())
+							.catch(error => reject(error))
+
 						} else {
 							resolve()
 						}
