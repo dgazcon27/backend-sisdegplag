@@ -23,7 +23,7 @@ module.exports = function(Document) {
 			} else {
 				readDocument(file.name)
 				.then(r => {
-					compareText(file.name ,generateNgrams(3, r.text))
+					compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
 					.then(res => {
 						next()
 					})
@@ -54,6 +54,7 @@ module.exports = function(Document) {
 
 	function compareText(url, arrayOfText) {
 		const urlstore = rootDoc;
+
 		var defer = new promise((resolve, reject) => {
 			Document.find({
 					where: {
@@ -66,9 +67,9 @@ module.exports = function(Document) {
 					} else {
 						if (res.length > 0) {
 							// // compare text
-							
+							// console.log(arrayOfText)
 							var promiseList = res.map(item => {
-								return new promise((res, rej) => {
+								return new promise((resp, rej) => {
 									readDocument(item.url)
 									.then(r => {
 										var record = []
@@ -76,6 +77,7 @@ module.exports = function(Document) {
 										for(var i = 0; i< arrayOfText.length; i++) {
 											var counted = 0
 											var text1  = arrayOfText[i]
+											// console.log(text1)
 											for(var j = 0;j < _3gram.length;j++) {
 												var text2 = _3gram[j]
 												if (text1[0] == text2[0] && text1[1] == text2[1] && text1[2] == text2[2]) {
@@ -85,7 +87,8 @@ module.exports = function(Document) {
 											record.push({text:text1, count:counted})
 											counted = 0
 										}
-										res()
+										console.log(record)
+										resp()
 										
 									})
 									.catch(e => {
