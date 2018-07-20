@@ -84,10 +84,12 @@ module.exports = function(Document) {
 													counted++
 												}
 											}
-											record.push({text:text1, count:counted})
+											record.push({received:url,scanned:item.url, text:text1, count:counted})
 											counted = 0
 										}
+										console.log('=============')
 										console.log(record)
+										console.log('=============')
 										resp()
 										
 									})
