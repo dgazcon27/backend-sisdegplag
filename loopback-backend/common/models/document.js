@@ -13,44 +13,36 @@ module.exports = function(Document) {
 
 	/* Remote Hooks */
 	/* Create a Image data after upload an image */
-	Document.afterRemote('upload', function (ctx, modelInstance, next) {
-		var file = ctx.result.response.files.document[0]
-		Document.create({
-				url: file.name
-		}, function (err, obj) {
-			if (err) { 
-				console.log(err) 
-			} else {
-				readDocument(file.name)
-				.then(r => {
-					compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
-					.then(res => {
-						console.log('response success')
-						next()
-					})
-					.catch(e => {
-						console.log('response error ')
-						next(e)
-					})
-				})
-				.catch(e => {
-					console.log('error response')
-					next(e)
-				})
-			}
-		});
-		// next();
-	});
 
 	Document.upload = function (req, res, cb) {
 		var Container = app.models.Container;
 		var error;
-		Container.upload(req, res, { container: 'documents' }, function (err, res) {
-			console.log(err, res)
+		Container.upload(req, res, { container: 'documents' }, function (err, rs) {
 			if (err) {
 				cb(err, null)
 			} else {
-				cb(null, res)
+				var file = rs.files.document[0];
+				Document.create({
+					url: file.name
+				}, function (err, obj) {
+					if (err) { 
+						console.log(err) 
+					} else {
+						readDocument(file.name)
+						.then(r => {
+							compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
+							.then(res => {
+								cb(null,res)
+							})
+							.catch(e => {
+								cb(e, null)
+							})
+						})
+						.catch(e => {
+							cb(e, null)
+						})
+					}
+				});
 			}
 		})
 	}

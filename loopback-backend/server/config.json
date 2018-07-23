@@ -22,7 +22,7 @@
     "handleErrors": false
   },
   "legacyExplorer": false,
-  "storage":"/home/deadline004/Documents/Daniel/Code/storage",
-  "documentsRoot":"/home/deadline004/Documents/Daniel/Code/storage/documents/",
+  "storage":"/home/daniel/Documentos/Tesis/Codes/storage",
+  "documentsRoot":"/home/daniel/Documentos/Tesis/Codes/storage/documents/",
   "publicHost":"http://localhost:8000"
 }
