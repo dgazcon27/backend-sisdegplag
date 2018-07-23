@@ -14,7 +14,7 @@ module.exports = function(Document) {
 	/* Remote Hooks */
 	/* Create a Image data after upload an image */
 	Document.afterRemote('upload', function (ctx, modelInstance, next) {
-		var file = modelInstance.status.files.document[0];
+		var file = ctx.result.response.files.document[0]
 		Document.create({
 				url: file.name
 		}, function (err, obj) {
@@ -25,11 +25,18 @@ module.exports = function(Document) {
 				.then(r => {
 					compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
 					.then(res => {
+						console.log('response success')
 						next()
 					})
-					.catch(e => next(e))
+					.catch(e => {
+						console.log('response error ')
+						next(e)
+					})
 				})
-				.catch(e => next(e))
+				.catch(e => {
+					console.log('error response')
+					next(e)
+				})
 			}
 		});
 		// next();
@@ -38,7 +45,14 @@ module.exports = function(Document) {
 	Document.upload = function (req, res, cb) {
 		var Container = app.models.Container;
 		var error;
-		Container.upload(req, res, { container: 'documents' }, cb)
+		Container.upload(req, res, { container: 'documents' }, function (err, res) {
+			console.log(err, res)
+			if (err) {
+				cb(err, null)
+			} else {
+				cb(null, res)
+			}
+		})
 	}
 	/* Remote Methods */
 
@@ -66,31 +80,41 @@ module.exports = function(Document) {
 						reject(err)
 					} else {
 						if (res.length > 0) {
-							// // compare text
-							// console.log(arrayOfText)
+							var counted = 0
+							var record = []
+							var _3gram = {}
+							var words = []
 							var promiseList = res.map(item => {
 								return new promise((resp, rej) => {
 									readDocument(item.url)
 									.then(r => {
-										var record = []
-										var _3gram = generateNgrams(3,r.text.toLowerCase().split(" "))
+										// Begin scanned document
+										// 
+										counted = 0
+										record = []
+										words = []
+										_3gram = generateNgrams(3,r.text.toLowerCase().split(" "))
 										for(var i = 0; i< arrayOfText.length; i++) {
-											var counted = 0
 											var text1  = arrayOfText[i]
-											// console.log(text1)
 											for(var j = 0;j < _3gram.length;j++) {
 												var text2 = _3gram[j]
 												if (text1[0] == text2[0] && text1[1] == text2[1] && text1[2] == text2[2]) {
 													counted++
+													words.push(text2)
 												}
 											}
-											record.push({received:url,scanned:item.url, text:text1, count:counted})
-											counted = 0
+											
+											
 										}
-										console.log('=============')
-										console.log(record)
-										console.log('=============')
-										resp()
+										if (counted > 0) {
+											record.push({
+												received:url,
+												scanned:item.url,
+												percentage: (counted*100)/_3gram.length,
+												words:words
+											})
+										}
+										resp(record)
 										
 									})
 									.catch(e => {
@@ -101,11 +125,13 @@ module.exports = function(Document) {
 							})
 
 							promise.all(promiseList)
-							.then(respon => resolve())
+							.then(respon => {
+								resolve(respon)
+							})
 							.catch(error => reject(error))
 
 						} else {
-							resolve()
+							resolve([])
 						}
 					}
 				}
@@ -195,8 +221,8 @@ module.exports = function(Document) {
 			{ arg: 'res', type: 'object', 'http': { source: 'res' } }
 		],
 		returns: { 
-			arg: 'status', 
-			type: 'string' 
+			arg: 'response', 
+			type: 'object', 
 		}
 	});
 };
