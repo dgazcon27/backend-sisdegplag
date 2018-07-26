@@ -5,7 +5,7 @@ module.exports = function(Document) {
 	var config = JSON.parse(fs.readFileSync('server/config.json', 'utf8'));
 	var promise = require('promise');
 	var app;
-	var rootDoc = config.documentsRoot;
+	const rootDoc = config.documentsRoot;
 
 	Document.on('attached', function (a) {
 		app = a;
@@ -30,7 +30,9 @@ module.exports = function(Document) {
 					} else {
 						readDocument(file.name)
 						.then(r => {
-							compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
+
+							// compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
+							lcsMethod(r.text, file.name)
 							.then(res => {
 								cb(null,res)
 							})
@@ -59,7 +61,6 @@ module.exports = function(Document) {
 	}
 
 	function compareText(url, arrayOfText) {
-		const urlstore = rootDoc;
 
 		var defer = new promise((resolve, reject) => {
 			Document.find({
@@ -189,6 +190,45 @@ module.exports = function(Document) {
 		
 		return ngram;
 
+ 	}
+
+ 	function lcsMethod(text1, url) {
+ 		var x = text1.split(" ")
+ 		var defer = new promise((resolve, reject) => {
+ 			Document.find({
+				where: {
+					url:{neq:url}
+				}
+
+			}, function (err, res) {
+				if (err) {
+					reject(err)
+				} else if (res.length > 0) {
+					var text
+					res.map(item => {
+						readDocument(item.url)
+						.then(txt => {
+							text = txt.text.split(' ')
+							for () {
+								
+							}
+						})
+						.catch(err => reject(x))
+					})
+				} else {
+					resolve()
+				}
+			})
+ 		})
+
+ 		return defer;
+ 	}
+
+ 	function initializeArray(leng1, leng2) {
+ 		var matriz = new new Array(leng1)
+ 		for () {
+ 			
+ 		}
  	}
 
 	Document.remoteMethod('test', {
