@@ -30,8 +30,8 @@ module.exports = function(Document) {
 					} else {
 						readDocument(file.name)
 						.then(r => {
-
-							// compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
+							// writeArray(initializeArray(3,3), 'matriz_prueba')
+							compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
 							lcsMethod(r.text, file.name)
 							.then(res => {
 								cb(null,res)
@@ -61,7 +61,6 @@ module.exports = function(Document) {
 	}
 
 	function compareText(url, arrayOfText) {
-
 		var defer = new promise((resolve, reject) => {
 			Document.find({
 					where: {
@@ -161,6 +160,8 @@ module.exports = function(Document) {
 		return defer;
 	}
 
+
+
 	function printRows(rows) {
 		var defer = new promise((resolve, reject)=> {
 			var text = ''
@@ -193,27 +194,47 @@ module.exports = function(Document) {
  	}
 
  	function lcsMethod(text1, url) {
- 		var x = text1.split(" ")
+ 		var textInserted = text1.toLowerCase().split(" ")
  		var defer = new promise((resolve, reject) => {
  			Document.find({
 				where: {
 					url:{neq:url}
 				}
-
 			}, function (err, res) {
 				if (err) {
 					reject(err)
 				} else if (res.length > 0) {
-					var text
+					var textCompared
+					var comparisson = []
 					res.map(item => {
+						var matriz = null
 						readDocument(item.url)
 						.then(txt => {
-							text = txt.text.split(' ')
-							for () {
-								
+
+							textCompared = txt.text.toLowerCase().split(' ')
+							matriz = initializeArray(textInserted.length, textCompared.length)
+							console.log('length inserted: ', textInserted.length, 'length compared: ', textCompared.length)
+							for(var i = 0; i < textInserted.length; i++) {
+								for (var j = 0; j < textCompared.length; j++) {
+									if (textInserted[i] == textCompared[j]) {
+										matriz[i+1][j+1] = 1 + matriz[i][j]
+									} else {
+										matriz[i+1][j+1] = Math.max(matriz[i][j+1], matriz[i+1][j])
+									}
+								}
 							}
+							comparisson.push({
+								inserted:url,
+								compared:item.url,
+								lcs:matriz[textInserted.length][textCompared.length]
+							})
+
+							console.log('len matriz', matriz.length,matriz[0].length)
+							writeArray(matriz,item.url)
+							resolve(comparisson)
+							
 						})
-						.catch(err => reject(x))
+						.catch(err => reject(err))
 					})
 				} else {
 					resolve()
@@ -224,11 +245,36 @@ module.exports = function(Document) {
  		return defer;
  	}
 
+ 	function writeArray(matriz, textName) {
+		var fs = require('fs');
+		var urlText = rootDoc+textName+'.txt';
+		console.log(urlText)
+		var stream = fs.createWriteStream(urlText);
+		stream.once('open', function(fd) {
+			stream.write('==========================')
+			stream.write(textName)
+			stream.write('==========================\n')
+			for (var i = 0; i < matriz.length; i++) {
+				stream.write(matriz[i]+' \n')
+			}
+			stream.end();
+		});
+ 	}
+
  	function initializeArray(leng1, leng2) {
- 		var matriz = new new Array(leng1)
- 		for () {
- 			
+ 		var matriz = new Array(leng1+1)
+ 		for (var i = 0; i < matriz.length; i++) {
+ 			matriz[i] = new Array(leng2+1)
  		}
+
+ 		for(var i = 0;i < matriz.length; i++) {
+ 			matriz[0][i] = 0
+ 		}
+
+ 		for(var i = 0;i < matriz.length; i++) {
+ 			matriz[i][0] = 0
+ 		}
+ 		return matriz;
  	}
 
 	Document.remoteMethod('test', {
