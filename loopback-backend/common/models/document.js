@@ -41,6 +41,7 @@ module.exports = function(Document) {
 							})
 						})
 						.catch(e => {
+							console.log(e)
 							cb(e, null)
 						})
 					}
@@ -152,6 +153,7 @@ module.exports = function(Document) {
 				} else if(item.text) {
 					// accumulate text items into rows object, per line
 					(rows[item.y] = rows[item.y] || []).push(item.text);
+					console.log(item.text)
 				}
 				
 			});
@@ -213,7 +215,6 @@ module.exports = function(Document) {
 
 							textCompared = txt.text.toLowerCase().split(' ')
 							matriz = initializeArray(textInserted.length, textCompared.length)
-							console.log('length inserted: ', textInserted.length, 'length compared: ', textCompared.length)
 							for(var i = 0; i < textInserted.length; i++) {
 								for (var j = 0; j < textCompared.length; j++) {
 									if (textInserted[i] == textCompared[j]) {
@@ -229,7 +230,6 @@ module.exports = function(Document) {
 								lcs:matriz[textInserted.length][textCompared.length]
 							})
 
-							console.log('len matriz', matriz.length,matriz[0].length)
 							writeArray(matriz,item.url)
 							resolve(comparisson)
 							
@@ -248,7 +248,6 @@ module.exports = function(Document) {
  	function writeArray(matriz, textName) {
 		var fs = require('fs');
 		var urlText = rootDoc+textName+'.txt';
-		console.log(urlText)
 		var stream = fs.createWriteStream(urlText);
 		stream.once('open', function(fd) {
 			stream.write('==========================')
@@ -268,11 +267,11 @@ module.exports = function(Document) {
  		}
 
  		for(var i = 0;i < matriz.length; i++) {
- 			matriz[0][i] = 0
+ 			matriz[i][0] = 0
  		}
 
- 		for(var i = 0;i < matriz.length; i++) {
- 			matriz[i][0] = 0
+ 		for(var i = 0;i < matriz[0].length; i++) {
+ 			matriz[0][i] = 0
  		}
  		return matriz;
  	}
