@@ -54,11 +54,15 @@ module.exports = function(Document) {
 	
 
 	Document.test = function test(cb) {
-		readDocument('')
-		.then(res => {
-			cb(null, {})
+		var extract = require('pdf-text-extract')
+		var filePath = '/home/deadline004/Documents/Daniel/Tesis/El_plagio_en_la_investigacion_cientifica.pdf'
+		extract(filePath, function (err, pages) {
+			if (err) {
+				console.dir(err)
+				return
+			}
+			console.dir(pages.length)
 		})
-		.catch(err => cb(err, null))
 	}
 
 	function compareText(url, arrayOfText) {
