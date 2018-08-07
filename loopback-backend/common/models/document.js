@@ -30,11 +30,10 @@ module.exports = function(Document) {
 					} else {
 						readDocument(file.name)
 						.then(r => {
-							// writeArray(initializeArray(3,3), 'matriz_prueba')
-							compareText(file.name ,generateNgrams(3, r.text.toLowerCase().split(" ")))
-							lcsMethod(r.text, file.name)
-							.then(res => {
-								cb(null,res)
+							compareText(file.name ,generateNgrams(3, r))
+							// lcsMethod(r.text, file.name)
+							.then(resp => {
+								cb(null,resp)
 							})
 							.catch(e => {
 								cb(e, null)
@@ -61,7 +60,16 @@ module.exports = function(Document) {
 				console.dir(err)
 				return
 			}
-			console.dir(pages.length)
+			var elements = []
+			for (var i = 0; i < pages.length; i++) {
+				var splitted = pages[i].toLowerCase().replace(/\t|\n|/g,'').split(" ")
+				splitted.map(it => {
+					if (it.trim() != '' && it != undefined) {
+						elements.push(it)
+					}
+				})
+				
+			}
 		})
 	}
 
@@ -82,15 +90,14 @@ module.exports = function(Document) {
 							var _3gram = {}
 							var words = []
 							var promiseList = res.map(item => {
+								console.log(item.url)
 								return new promise((resp, rej) => {
 									readDocument(item.url)
 									.then(r => {
-										// Begin scanned document
-										// 
 										counted = 0
 										record = []
 										words = []
-										_3gram = generateNgrams(3,r.text.toLowerCase().split(" "))
+										_3gram = generateNgrams(3,r)
 										for(var i = 0; i< arrayOfText.length; i++) {
 											var text1  = arrayOfText[i]
 											for(var j = 0;j < _3gram.length;j++) {
@@ -100,9 +107,8 @@ module.exports = function(Document) {
 													words.push(text2)
 												}
 											}
-											
-											
 										}
+										console.log('counted:', counted)
 										if (counted > 0) {
 											record.push({
 												received:url,
@@ -140,27 +146,27 @@ module.exports = function(Document) {
 	}
 
 	function readDocument(url) {
-		var fs = require("fs");
-		var pdfreader = require('pdfreader');
-		var i = 0
-		var rows = {}
 		var defer = new promise((resolve, reject) => {
-			new pdfreader.PdfReader().parseFileItems(rootDoc+url, function(err, item){
-				if (item == undefined) {
-					// finish read document
-					printRows(rows)
-					.then(r=>{
-						var response = {text:r}
-						resolve(response)
-					})
-					.catch(e => reject(e))
-				} else if(item.text) {
-					// accumulate text items into rows object, per line
-					(rows[item.y] = rows[item.y] || []).push(item.text);
-					console.log(item.text)
+			var extract = require('pdf-text-extract')
+			extract(rootDoc+url, function (err, pages) {
+				if (err) {
+					console.dir(err)
+					reject(err)
+					return
 				}
-				
-			});
+				var elements = []
+				for (var i = 0; i < pages.length; i++) {
+					console.log(i)
+					var splitted = pages[i].toLowerCase().replace(/\t|\n/g,' ').split(" ")
+					for (var j = 0; j < splitted.length; j++) {
+						if (splitted[j].trim() != '' && splitted[j] != undefined) {
+							elements.push(splitted[j])
+						}
+						
+					}
+				}
+				resolve(elements)
+			})
 		})
 		
 		return defer;
