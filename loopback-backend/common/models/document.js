@@ -28,21 +28,37 @@ module.exports = function(Document) {
 					if (err) { 
 						console.log(err) 
 					} else {
-						readDocument(file.name)
-						.then(r => {
-							compareText(file.name ,generateNgrams(3, r))
-							// lcsMethod(r.text, file.name)
-							.then(resp => {
-								cb(null,resp)
-							})
-							.catch(e => {
-								cb(e, null)
-							})
+
+						promise.all([readDocument(file.name),fetchDocuments(file.name)])
+						.then(documents => {
+							if (documents[0].length > 0 && documents[1].length > 0) {
+								comparedText_(documents[0], documents[1])
+								.then(result => {
+									cb(null, result)
+								})
+								.catch(er => cb(er,null))
+							} else {
+								cb(null, [])
+							}
+							
 						})
-						.catch(e => {
-							console.log(e)
-							cb(e, null)
-						})
+						.catch(err,cb(err, null))
+
+						// readDocument(file.name)
+						// .then(r => {
+						// 	compareText(file.name ,generateNgrams(3, r))
+						// 	// lcsMethod(r.text, file.name)
+						// 	.then(resp => {
+						// 		cb(null,resp)
+						// 	})
+						// 	.catch(e => {
+						// 		cb(e, null)
+						// 	})
+						// })
+						// .catch(e => {
+						// 	console.log(e)
+						// 	cb(e, null)
+						// })
 					}
 				});
 			}
@@ -73,6 +89,15 @@ module.exports = function(Document) {
 		})
 	}
 
+	function comparedText_(compare, toCompare) {
+		var defer = new promise((resolve, reject) => {
+			console.log(toCompare)
+			resolve()
+		});
+
+		return defer;
+	}
+
 	function compareText(url, arrayOfText) {
 		var defer = new promise((resolve, reject) => {
 			Document.find({
@@ -90,7 +115,6 @@ module.exports = function(Document) {
 							var _3gram = {}
 							var words = []
 							var promiseList = res.map(item => {
-								console.log(item.url)
 								return new promise((resp, rej) => {
 									readDocument(item.url)
 									.then(r => {
@@ -108,7 +132,7 @@ module.exports = function(Document) {
 												}
 											}
 										}
-										console.log('counted:', counted)
+
 										if (counted > 0) {
 											record.push({
 												received:url,
@@ -156,7 +180,6 @@ module.exports = function(Document) {
 				}
 				var elements = []
 				for (var i = 0; i < pages.length; i++) {
-					console.log(i)
 					var splitted = pages[i].toLowerCase().replace(/\t|\n/g,' ').split(" ")
 					for (var j = 0; j < splitted.length; j++) {
 						if (splitted[j].trim() != '' && splitted[j] != undefined) {
@@ -169,6 +192,37 @@ module.exports = function(Document) {
 			})
 		})
 		
+		return defer;
+	}
+
+	function fetchDocuments(url) {
+		var defer = new promise((resolve, reject)=> {
+			Document.find({
+				where: {
+					url:{neq:url}
+				}
+
+			}, function (err, documents) {
+				if (err) {
+					reject(err)
+				} else {
+					if (documents.length > 0) {
+						var promisesList = documents.map(it => {
+							return readDocument(it.url)
+						})
+						
+						promise.all(promisesList)
+						.then(list => {
+							resolve(list)
+						})
+						.catch(err => reject(err))
+					} else {
+						resolve([])
+					}
+				}
+			})
+		})
+
 		return defer;
 	}
 
