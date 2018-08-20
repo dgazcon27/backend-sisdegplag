@@ -17,7 +17,8 @@ module.exports = function(Document) {
 	Document.upload = function (req, res, cb) {
 		var Container = app.models.Container;
 		var error;
-		Container.upload(req, res, { container: 'documents' }, function (err, rs) {
+		Container.upload(req, res, { container: 'documents' }, 
+			function (err, rs) {
 			if (err) {
 				cb(err, null)
 			} else {
@@ -28,22 +29,29 @@ module.exports = function(Document) {
 					if (err) { 
 						console.log(err) 
 					} else {
-
+						// readDocument(file.name)
+						// .then(res => {
+						// 	console.log(res)
+						// 	cb(null, res)
+						// })
+						// .catch(err => cb(err, null))
 						promise.all([readDocument(file.name),fetchDocuments(file.name)])
 						.then(documents => {
-							if (documents[0].length > 0 && documents[1].length > 0) {
+							// console.log(documents)	
+							var response = {}
+							if (documents[0].text.length > 0 && documents[1].length > 0) {
 								comparedText_(documents[0], documents[1])
-								.then(result => {
-									cb(null, result)
+								.then(rsp => {
+									response = rsp
+									cb(null, rsp)
 								})
 								.catch(er => cb(er,null))
 							} else {
-								cb(null, [])
+								response = rs
+								cb(null, obj)
 							}
-							
 						})
-						.catch(err,cb(err, null))
-
+						.catch(err => cb(err, null))
 						// readDocument(file.name)
 						// .then(r => {
 						// 	compareText(file.name ,generateNgrams(3, r))
@@ -91,8 +99,49 @@ module.exports = function(Document) {
 
 	function comparedText_(compare, toCompare) {
 		var defer = new promise((resolve, reject) => {
-			console.log(toCompare)
-			resolve()
+			var counted = 0;
+			var record = [];
+			var _3gram = {};
+			var words = [];
+
+			//Compare using N-Grams method
+			var ngrams = generateNgrams(3, compare.text); // ngrams of document received
+			var promiseList = toCompare.map(item => {
+				return new promise((resol, rej) => {
+					counted = 0;
+					record = [];
+					var ngramsToCompare = generateNgrams(3,item.text) // ngrams of documents in storage
+					
+					// for (var i = 0; i < ngrams.length ; i++) {
+					// 	var text1 = ngrams[i];
+					// 	for (var j = 0; j < ngramsToCompare.length; j++) {
+					// 		var text2 = ngramsToCompare[j]
+					// 		if (text1[0] == text2[0] && text1[1] == text2[1] && text1[2] == text2[2]) {
+					// 			counted++
+					// 			words.push(text2)
+					// 		}
+					// 	}
+					// }
+
+					// if (counted > 0) {
+					// 	console.log(counted,'  ----  ',ngramsToCompare.length, ' - --- -', item.url)
+					// 	record.push({
+					// 		percentage: (counted*100)/ngrams.length,
+					// 		words:words,
+					// 		compareTo: item.url,
+					// 		received:compare.url
+					// 	})
+					// }
+					resol(record)
+				})
+			})
+
+			promise.all(promiseList)
+			.then(resp => {
+				resolve(resp)
+			})
+			.catch(err => reject(err))
+
 		});
 
 		return defer;
@@ -114,42 +163,38 @@ module.exports = function(Document) {
 							var record = []
 							var _3gram = {}
 							var words = []
+
+							// Comparisson using ngrams
 							var promiseList = res.map(item => {
 								return new promise((resp, rej) => {
-									readDocument(item.url)
-									.then(r => {
-										counted = 0
-										record = []
-										words = []
-										_3gram = generateNgrams(3,r)
-										for(var i = 0; i< arrayOfText.length; i++) {
-											var text1  = arrayOfText[i]
-											for(var j = 0;j < _3gram.length;j++) {
-												var text2 = _3gram[j]
-												if (text1[0] == text2[0] && text1[1] == text2[1] && text1[2] == text2[2]) {
-													counted++
-													words.push(text2)
-												}
+									counted = 0
+									record = []
+									words = []
+									_3gram = generateNgrams(3,r)
+									for(var i = 0; i< arrayOfText.length; i++) {
+										var text1  = arrayOfText[i]
+										for(var j = 0;j < _3gram.length;j++) {
+											var text2 = _3gram[j]
+											if (text1[0] == text2[0] && text1[1] == text2[1] && text1[2] == text2[2]) {
+												counted++
+												words.push(text2)
 											}
 										}
+									}
 
-										if (counted > 0) {
-											record.push({
-												received:url,
-												scanned:item.url,
-												percentage: (counted*100)/_3gram.length,
-												words:words
-											})
-										}
-										resp(record)
-										
-									})
-									.catch(e => {
-										console.log(e)
-										rej(e)
-									})
+									if (counted > 0) {
+										record.push({
+											received:url,
+											scanned:item.url,
+											percentage: (counted*100)/_3gram.length,
+											words:words
+										})
+									}
+								
 								})
 							})
+
+							// Comparisson using LCS
 
 							promise.all(promiseList)
 							.then(respon => {
@@ -178,6 +223,7 @@ module.exports = function(Document) {
 					reject(err)
 					return
 				}
+				var doc = {}
 				var elements = []
 				for (var i = 0; i < pages.length; i++) {
 					var splitted = pages[i].toLowerCase().replace(/\t|\n/g,' ').split(" ")
@@ -188,7 +234,9 @@ module.exports = function(Document) {
 						
 					}
 				}
-				resolve(elements)
+				doc.text = elements;
+				doc.url = url
+				resolve(doc)
 			})
 		})
 		
@@ -254,7 +302,6 @@ module.exports = function(Document) {
 			ngram.push(gram)
 			gram = []
 		}
-		
 		return ngram;
 
  	}
@@ -363,7 +410,7 @@ module.exports = function(Document) {
 		],
 		returns: { 
 			arg: 'response', 
-			type: 'object', 
+			type: 'object',
 		}
 	});
 };
