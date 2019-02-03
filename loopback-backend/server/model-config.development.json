@@ -41,5 +41,9 @@
   "container": {
     "dataSource": "storage",
     "public": true
+  },
+  "document": {
+    "dataSource": "mysql_corp",
+    "public": true
   }
 }
