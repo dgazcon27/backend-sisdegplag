@@ -4,6 +4,7 @@ module.exports = function(Document) {
 	var fs = require('fs')
 	var config = JSON.parse(fs.readFileSync('server/config.json', 'utf8'));
 	var promise = require('promise');
+	
 	var app;
 	const rootDoc = config.documentsRoot;
 
@@ -33,9 +34,11 @@ module.exports = function(Document) {
 						.then(documents => {
 							var response = {}
 							if (documents[0].text.length > 0 && documents[1].length > 0) {
-
-								// compareText(documents[0], documents[1])
-								lcsMethod(documents[0], documents[1])
+								promise.all([
+									// compareText(documents[0], documents[1]),
+									// lcsMethod(documents[0], documents[1])
+									vectorialModelFunction(documents[0], documents[1])
+								])
 								.then(rsp => {
 									response = rsp
 									cb(null, response)
@@ -52,88 +55,52 @@ module.exports = function(Document) {
 			}
 		})
 	}
-	
-	function lcsMethod_(text1, url) {
- 		var textInserted = text1.toLowerCase().split(" ")
- 		var defer = new promise((resolve, reject) => {
- 			Document.find({
-				where: {
-					url:{neq:url}
-				}
-			}, function (err, res) {
-				if (err) {
-					reject(err)
-				} else if (res.length > 0) {
-					var textCompared
-					var comparisson = []
-					res.map(item => {
-						var matriz = null
-						readDocument(item.url)
-						.then(txt => {
-							textCompared = txt.text.toLowerCase().split(' ')
-							matriz = initializeArray(textInserted.length, textCompared.length)
-							for(var i = 0; i < textInserted.length; i++) {
-								for (var j = 0; j < textCompared.length; j++) {
-									if (textInserted[i] == textCompared[j]) {
-										matriz[i+1][j+1] = 1 + matriz[i][j]
-									} else {
-										matriz[i+1][j+1] = Math.max(matriz[i][j+1], matriz[i+1][j])
-									}
-								}
-							}
-							comparisson.push({
-								inserted:url,
-								compared:item.url,
-								lcs:matriz[textInserted.length][textCompared.length]
-							})
-
-							writeArray(matriz,item.url)
-							resolve(comparisson)
-							
-						})
-						.catch(err => reject(err))
-					})
-				} else {
-					resolve()
-				}
-			})
- 		})
-
- 		return defer;
- 	}
 
 	function lcsMethod(compare, toCompare) {
 		var textInserted = compare.text;
 		var defer = new promise((resolve, reject) => {
 			var textCompared;
-			var comparisson = [];
-			toCompare.map(item => {
-				var matriz = null
-				textCompared = item.text;
-				matriz = initializeArray(textInserted.length,textCompared.length);
-				for(var i = 0; i < textInserted.length; i++) {
-					for (var j = 0; j < textCompared.length; j++) {
-						console.log(textInserted[i],textCompared[j])
-						if (textInserted[i] == textCompared[j]) {
-							matriz[i+1][j+1] = 1 + matriz[i][j]
-						} else {
-							matriz[i+1][j+1] = Math.max(matriz[i][j+1], matriz[i+1][j])
+			var comparisson;
+			var matriz;
+
+			var promiseList = toCompare.map(item => {
+				return new promise((resol, rej) => {
+					matriz = null;
+					comparisson = [];
+					textCompared = item.text;
+					matriz = initializeArray(textInserted.length,textCompared.length);
+					for(var i = 0; i < textInserted.length; i++) {
+						for (var j = 0; j < textCompared.length; j++) {
+							if (textInserted[i] == textCompared[j]) {
+								matriz[i+1][j+1] = 1 + matriz[i][j]
+							} else {
+								matriz[i+1][j+1] = Math.max(matriz[i][j+1], matriz[i+1][j])
+							}
 						}
 					}
-				}
-				comparisson.push({
-					inserted:compare.url,
-					compared:item.url,
-					lcs:matriz[textInserted.length][textCompared.length]
+					let lcs = matriz[textInserted.length][textCompared.length];
+					let lenCompare = textCompared.length;
+					let lengthText = textInserted.length;
+					resol({
+						inserted:compare.url,
+						compared:item.url,
+						lcs: lcs,
+						lengthText: lengthText,
+						percentage: (lcs/lenCompare)*100
+					})
 				})
-				resolve(comparisson)
+			});
 
+			promise.all(promiseList)
+			.then(resp => {
+				resolve(resp)
 			})
+			.catch(err => reject(err))
 		})
 
 		return defer;
 	}
-
+	
 	function compareText(textSuspect, listOfText) {
 		var intersection = [];
 		var union = [];
@@ -183,6 +150,74 @@ module.exports = function(Document) {
 		return defer;
 	}
 
+	function vectorialModelFunction(textSuspect, listOfText) {
+		var arrayText1 = removeStopWords(textSuspect.text);
+		console.log(arrayText1)
+		var defer = new promise((resolve, reject) => {
+			var arrayText2;
+			var vectorialModel;
+			var vectorialResult1;
+			var vectorialResult2;
+			var result;
+			var promiseList = listOfText.map(item => {
+				return new promise((resol, rej) => {
+					resol()
+					// arrayText2 = removeStopWords(item);
+					// console.log(arrayText2)
+					// vectorialModel = uniq_fast(mergeDocuments(arrayText1, arrayText2));
+					// vectorialResult1 = []
+					// vectorialResult2 = []
+					// result = 0;
+					// var countText;
+					// for (var i = 0; i < vectorialModel.length; i++) {
+					// 	countText = 0;
+					// 	for (var j = 0; j < arrayText1.length; j++) {
+					// 		if (vectorialModel[i] == arrayText1[j]) {
+					// 			countText++;
+					// 		}
+					// 	}
+					// 	vectorialResult1.push(countText)
+					// }
+
+					// for (var i = 0; i < vectorialModel.length; i++) {
+					// 	countText = 0;
+					// 	for (var j = 0; j < arrayText2.length; j++) {
+					// 		if (vectorialModel[i] == arrayText2[j]) {
+					// 			countText++;
+					// 		}
+					// 	}
+					// 	vectorialResult2.push(countText)
+					// }
+
+					// var denominator = 0;
+					// var factorA = 0;
+					// var factorB = 0;
+					// var max = vectorialResult1 > vectorialResult2 ? vectorialResult1 : vectorialResult2;
+					// for (var i = 0; i < max; i++) {
+					// 	denominator += vectorialResult2[i]*vectorialResult1[i];
+					// 	factorA += Math.pow(vectorialResult2[i], 2);
+					// 	factorB += Math.pow(vectorialResult1[i], 2);
+					// }
+					// result = (denominator/(Math.sqrt(factorA)+Math.sqrt(factorB))).toFixed(4);
+					// resol({
+					// 	result: result,
+					// })
+
+				})
+
+
+			})
+
+			promise.all(promiseList)
+			.then(resp => {
+				resolve(resp)
+			})
+			.catch(err => reject(err))
+
+		})
+		return defer;
+	}
+
 	function readDocument(url) {
 		var defer = new promise((resolve, reject) => {
 			var extract = require('pdf-text-extract')
@@ -195,12 +230,14 @@ module.exports = function(Document) {
 				var doc = {}
 				var elements = []
 				for (var i = 0; i < pages.length; i++) {
-					var splitted = pages[i].toLowerCase().replace(/\t|\n|\,|\.|\:|\;|\(|\)|\{|\}/g,' ').split(" ")
+					var splitted = pages[i]
+						.toLowerCase()
+						.replace(/\t|\n|\,|\.|\:|\;|\(|\)|\{|\}|\?|\¿|\"|\-|\]|\[/g,' ')
+						.split(" ")
 					for (var j = 0; j < splitted.length; j++) {
 						if (splitted[j].trim() != '' && splitted[j] != undefined) {
 							elements.push(splitted[j])
 						}
-						
 					}
 				}
 				doc.text = elements;
@@ -210,6 +247,15 @@ module.exports = function(Document) {
 		})
 		
 		return defer;
+	}
+
+	function removeStopWords(array) {
+		var regex = require('../shared/regex-expresion')
+		for(var i = 0; i < array.length; i++) {
+			if (regex.test(array[i]))
+				array.splice(i, 1);
+		}
+		return array;
 	}
 
 	/**
