@@ -1,5 +1,5 @@
 {
-  "name": "Backend SisPlag",
+  "name": "backend_sisplag",
   "version": "0.1.0",
   "main": "server/server.js",
   "scripts": {
@@ -17,8 +17,8 @@
     "grunt-cli": "^1.2.0",
     "helmet": "^3.1.0",
     "ip": "^1.1.5",
-    "loopback": "^2.22.0",
-    "loopback-boot": "^2.6.5",
+    "loopback": "^3.25.0",
+    "loopback-boot": "^2.27.1",
     "loopback-component-explorer": "^2.4.0",
     "loopback-component-storage": "^3.2.0",
     "loopback-connector-mysql": "^2.3.0",

@@ -35,8 +35,8 @@ module.exports = function(Document) {
 							var response = {}
 							if (documents[0].text.length > 0 && documents[1].length > 0) {
 								promise.all([
-									// compareText(documents[0], documents[1]),
-									// lcsMethod(documents[0], documents[1])
+									compareText(documents[0], documents[1]),
+									lcsMethod(documents[0], documents[1]),
 									vectorialModelFunction(documents[0], documents[1])
 								])
 								.then(rsp => {
@@ -152,7 +152,6 @@ module.exports = function(Document) {
 
 	function vectorialModelFunction(textSuspect, listOfText) {
 		var arrayText1 = removeStopWords(textSuspect.text);
-		console.log(arrayText1)
 		var defer = new promise((resolve, reject) => {
 			var arrayText2;
 			var vectorialModel;
@@ -161,47 +160,42 @@ module.exports = function(Document) {
 			var result;
 			var promiseList = listOfText.map(item => {
 				return new promise((resol, rej) => {
-					resol()
-					// arrayText2 = removeStopWords(item);
-					// console.log(arrayText2)
-					// vectorialModel = uniq_fast(mergeDocuments(arrayText1, arrayText2));
-					// vectorialResult1 = []
-					// vectorialResult2 = []
-					// result = 0;
-					// var countText;
-					// for (var i = 0; i < vectorialModel.length; i++) {
-					// 	countText = 0;
-					// 	for (var j = 0; j < arrayText1.length; j++) {
-					// 		if (vectorialModel[i] == arrayText1[j]) {
-					// 			countText++;
-					// 		}
-					// 	}
-					// 	vectorialResult1.push(countText)
-					// }
-
-					// for (var i = 0; i < vectorialModel.length; i++) {
-					// 	countText = 0;
-					// 	for (var j = 0; j < arrayText2.length; j++) {
-					// 		if (vectorialModel[i] == arrayText2[j]) {
-					// 			countText++;
-					// 		}
-					// 	}
-					// 	vectorialResult2.push(countText)
-					// }
-
-					// var denominator = 0;
-					// var factorA = 0;
-					// var factorB = 0;
-					// var max = vectorialResult1 > vectorialResult2 ? vectorialResult1 : vectorialResult2;
-					// for (var i = 0; i < max; i++) {
-					// 	denominator += vectorialResult2[i]*vectorialResult1[i];
-					// 	factorA += Math.pow(vectorialResult2[i], 2);
-					// 	factorB += Math.pow(vectorialResult1[i], 2);
-					// }
-					// result = (denominator/(Math.sqrt(factorA)+Math.sqrt(factorB))).toFixed(4);
-					// resol({
-					// 	result: result,
-					// })
+					arrayText2 = removeStopWords(item.text);
+					vectorialModel = uniq_fast(mergeDocuments(arrayText1, arrayText2));
+					vectorialResult1 = []
+					vectorialResult2 = []
+					result = 0;
+					var countText;
+					for (var i = 0; i < vectorialModel.length; i++) {
+						countText = 0;
+						for (var j = 0; j < arrayText1.length; j++) {
+							if (vectorialModel[i] == arrayText1[j]) {
+								countText++;
+							}
+						}
+						vectorialResult1.push(countText)
+						countText = 0;
+						for (var j = 0; j < arrayText2.length; j++) {
+							if (vectorialModel[i] == arrayText2[j]) {
+								countText++;
+							}
+						}
+						vectorialResult2.push(countText)
+					}
+					var denominator = 0;
+					var factorA = 0;
+					var factorB = 0;
+					var max = vectorialResult2.length;
+					for (var i = 0; i < max; i++) {
+						denominator += vectorialResult2[i]*vectorialResult1[i];
+						factorA += Math.pow(vectorialResult2[i], 2);
+						factorB += Math.pow(vectorialResult1[i], 2);
+					}
+					result = ((denominator/(Math.sqrt(factorA)*Math.sqrt(factorB))).toFixed(4))*100;
+					resol({
+						result: result,
+						text: item.url
+					})
 
 				})
 
@@ -250,12 +244,13 @@ module.exports = function(Document) {
 	}
 
 	function removeStopWords(array) {
+		var obj = Object.assign(array,{})
 		var regex = require('../shared/regex-expresion')
-		for(var i = 0; i < array.length; i++) {
-			if (regex.test(array[i]))
-				array.splice(i, 1);
+		for(var i = 0; i < obj.length; i++) {
+			if (regex.test(obj[i]))
+				obj.splice(i, 1);
 		}
-		return array;
+		return obj;
 	}
 
 	/**
