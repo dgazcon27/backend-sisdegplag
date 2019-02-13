@@ -7,7 +7,7 @@
     "name": "storage",
     "connector": "loopback-component-storage",
     "provider": "filesystem",
-    "root": "/home/daniel/Documentos/Tesis/Codes/storage",
+    "root": "/home/deadline004/Documentos/daniel/Code-Tesis/storage",
     "maxFileSize": "150000000"
   }
 }

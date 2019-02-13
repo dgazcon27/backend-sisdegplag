@@ -45,5 +45,9 @@
   "document": {
     "dataSource": "db",
     "public": true
+  },
+  "statistics": {
+    "dataSource": "db",
+    "public": true
   }
 }

@@ -7,27 +7,27 @@
     "host": "localhost",
     "port": 3306,
     "url": "",
-    "database": "aduanali_dev",
-    "password": "E8ug?S1(V]m0",
-    "name": "mysqlDs",
-    "user": "aduanali_dev",
+    "database": "plagium-sis",
+    "password": "",
+    "name": "mysql_corp",
+    "user": "root",
     "connector": "mysql"
   },
   "mysql_security": {
     "host": "localhost",
     "port": 3306,
     "url": "",
-    "database": "15-minutos-backend-security-dev",
+    "database": "plagium-sis-sec",
     "password": "",
-    "name": "aduanali_secure-dev",
-    "user": "aduanali_dev",
+    "name": "mysql_security",
+    "user": "root",
     "connector": "mysql"
   },
   "storage": {
     "name": "storage",
     "connector": "loopback-component-storage",
     "provider": "filesystem",
-    "root": "/home/daniel/Documentos/Proyectos/15-minutos/storage",
+    "root": "/home/deadline004/Documentos/daniel/Code-Tesis/storage",
     "maxFileSize": "550000000"
   }
 }
