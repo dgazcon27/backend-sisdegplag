@@ -109,7 +109,6 @@ module.exports = function(Document) {
 		var ngSuspect = generateNgrams(3, textSuspect.text);
 		var counted;
 		var defer = new promise((resolve, reject) => {
-
 			var promiseList = listOfText.map(item => {
 				return new promise((resol, rej) => {
 					indexes = [];
@@ -145,8 +144,6 @@ module.exports = function(Document) {
 			.catch(err => reject(err))
 
 		})
-
-
 		return defer;
 	}
 
@@ -198,8 +195,6 @@ module.exports = function(Document) {
 					})
 
 				})
-
-
 			})
 
 			promise.all(promiseList)
@@ -209,6 +204,62 @@ module.exports = function(Document) {
 			.catch(err => reject(err))
 
 		})
+		return defer;
+	}
+
+	function bayesianMethod(result) {
+		var Statistics = app.models.Statistics;
+		var defer = new promise((resolve, reject)=>{
+			// Contar todos los elementos
+			var promise1 = new promise((resol, rej) => {
+				Statistics.count(function (err, res) {
+					if (err) {
+						rej()
+					} else {
+						resol(res)
+					} 
+				})
+			});
+			//Contar solo los documentos plagiados
+			var promise2 = new promise((resol, rej) => {
+				Statistics.count({
+					"type":"no_plagiado"
+				},function (err, res) {
+					if (err) {
+						rej()
+					} else {
+						resol(res)
+					} 
+				})
+			});
+
+			//Contar solo los documentos no plagiados
+			var promise3 = new promise((resol, rej) => {
+				Statistics.count({
+					"type":"plagiado"
+				},function (err, res) {
+					if (err) {
+						rej()
+					} else {
+						resol(res)
+					} 
+				})
+			});
+
+			promise.all([
+				promise1,
+				promise2,
+				promise3
+			])
+			.then(res => {
+				resolve();
+			})
+			.catch(err => {
+				reject();
+			})
+
+		})
+
 		return defer;
 	}
 
@@ -379,6 +430,32 @@ module.exports = function(Document) {
  		}
  		return matriz;
  	}
+
+ 	Document.test = function test(cb) {
+ 		promise.all([
+ 			bayesianMethod()
+ 		])
+ 		.then(res => {
+ 			cb()
+ 		})
+ 		.catch(err => {
+ 			console.log(err)
+ 			cb()
+ 		})
+	}
+
+	Document.remoteMethod('test',{
+		http: { 
+			path: '/test', 
+			verb: 'get' 
+		},
+		accepts: [
+		],
+		returns: { 
+			arg: 'response', 
+			type: 'object',
+		}
+	});
 
 	Document.remoteMethod('upload',{
 		http: { 

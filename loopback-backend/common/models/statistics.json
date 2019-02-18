@@ -7,37 +7,31 @@
     "validateUpsert": true
   },
   "properties": {
-    "ngramLow": {
-      "type": "int",
+    "ngram": {
+      "type": "string",
       "required": true
     },
-    "ngramHigh": {
-      "type": "int",
+    "lcs": {
+      "type": "string",
       "required": true
     },
-    "lcsLow": {
-      "type": "int",
-      "required": true
-    },
-    "lcsHigh": {
-      "type": "int",
-      "required": true
-    },
-    "vectorialModelLow": {
-      "type": "int",
-      "required": true
-    },
-    "vectorialModelHigh": {
-      "type": "int",
+    "vectorialModel": {
+      "type": "string",
       "required": true
     },
     "type": {
-      "type": "int",
+      "type": "string",
       "required": true
     }
   },
   "validations": [],
-  "relations": {},
+  "relations": {
+    "document": {
+      "type": "belongsTo",
+      "model": "document",
+      "foreignKey": "documentId"
+    }
+  },
   "acls": [],
   "methods": {}
 }
