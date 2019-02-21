@@ -25,13 +25,7 @@
     }
   },
   "validations": [],
-  "relations": {
-    "document": {
-      "type": "belongsTo",
-      "model": "document",
-      "foreignKey": "documentId"
-    }
-  },
+  "relations": {},
   "acls": [],
   "methods": {}
 }

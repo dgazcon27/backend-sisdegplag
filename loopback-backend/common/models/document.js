@@ -35,13 +35,35 @@ module.exports = function(Document) {
 							var response = {}
 							if (documents[0].text.length > 0 && documents[1].length > 0) {
 								promise.all([
-									compareText(documents[0], documents[1]),
+									nGramMethod(documents[0], documents[1]),
 									lcsMethod(documents[0], documents[1]),
 									vectorialModelFunction(documents[0], documents[1])
 								])
 								.then(rsp => {
-									response = rsp
-									cb(null, response)
+									// let result = [];
+									let obj = {
+										ngram: rsp[0][0].ngrams,
+										lcs: rsp[1][0].lcs,
+										vectorialM: rsp[2][0].vectorialM,
+										text: rsp[0][0].suspect
+									}
+									// result.push(obj)
+									for (var i = 1; i < documents[1].length; i++) {
+										let media1 = (obj.ngram+obj.lcs+obj.vec)/3
+										let media2 = (rsp[0][i].ngram+rsp[0][i].lcs+rsp[0][i].vec)/3
+										if (media2 > media1) {
+											obj = {
+												ngram: rsp[0][i].ngrams,
+												lcs: rsp[1][i].lcs,
+												vectorialM: rsp[2][i].vectorialM,
+												text: rsp[0][0].suspect
+											}
+										}
+									}
+									promise.resolve(bayesianMethod(obj, documents[1]))
+									.then(res=>cb(null, res))
+									.catch(error => cb(error,null))
+
 								})
 								.catch(er => cb(er,null))
 							} else {
@@ -82,11 +104,8 @@ module.exports = function(Document) {
 					let lenCompare = textCompared.length;
 					let lengthText = textInserted.length;
 					resol({
-						inserted:compare.url,
-						compared:item.url,
-						lcs: lcs,
-						lengthText: lengthText,
-						percentage: (lcs/lenCompare)*100
+						lcs: (lcs/lenCompare)*100,
+						suspect:item.url
 					})
 				})
 			});
@@ -101,7 +120,7 @@ module.exports = function(Document) {
 		return defer;
 	}
 	
-	function compareText(textSuspect, listOfText) {
+	function nGramMethod(textSuspect, listOfText) {
 		var intersection = [];
 		var union = [];
 		var indexes = [];
@@ -129,10 +148,8 @@ module.exports = function(Document) {
 					let lenUnique = unique.length;
 					let lenUnion = union.length;
 					resol({
-						count: lenUnique,
-						text: unique,
-						percentage: (lenUnique/lenUnion)*100,
-						union: lenUnion
+						ngrams: (lenUnique/lenUnion)*100,
+						suspect: item.url
 					})
 				})
 			});
@@ -190,7 +207,7 @@ module.exports = function(Document) {
 					}
 					result = ((denominator/(Math.sqrt(factorA)*Math.sqrt(factorB))).toFixed(4))*100;
 					resol({
-						result: result,
+						vectorialM: result,
 						text: item.url
 					})
 
@@ -207,57 +224,18 @@ module.exports = function(Document) {
 		return defer;
 	}
 
-	function bayesianMethod(result) {
-		var Statistics = app.models.Statistics;
+	function compareText() {
+		var defer = new promise((resolve, reject)=> {
+
+		});
+
+		return defer;
+	}
+
+	function bayesianMethod(result, documents) {
+		console.log(result)
 		var defer = new promise((resolve, reject)=>{
-			// Contar todos los elementos
-			var promise1 = new promise((resol, rej) => {
-				Statistics.count(function (err, res) {
-					if (err) {
-						rej()
-					} else {
-						resol(res)
-					} 
-				})
-			});
-			//Contar solo los documentos plagiados
-			var promise2 = new promise((resol, rej) => {
-				Statistics.count({
-					"type":"no_plagiado"
-				},function (err, res) {
-					if (err) {
-						rej()
-					} else {
-						resol(res)
-					} 
-				})
-			});
-
-			//Contar solo los documentos no plagiados
-			var promise3 = new promise((resol, rej) => {
-				Statistics.count({
-					"type":"plagiado"
-				},function (err, res) {
-					if (err) {
-						rej()
-					} else {
-						resol(res)
-					} 
-				})
-			});
-
-			promise.all([
-				promise1,
-				promise2,
-				promise3
-			])
-			.then(res => {
-				resolve();
-			})
-			.catch(err => {
-				reject();
-			})
-
+			resolve()
 		})
 
 		return defer;
@@ -314,7 +292,8 @@ module.exports = function(Document) {
 			Document.find({
 				where: {
 					url:{neq:url}
-				}
+				},
+				include:["statistics"]
 
 			}, function (err, documents) {
 				if (err) {
@@ -432,10 +411,9 @@ module.exports = function(Document) {
  	}
 
  	Document.test = function test(cb) {
- 		promise.all([
- 			bayesianMethod()
- 		])
+ 		promise.resolve(bayesianMethod())
  		.then(res => {
+ 			console.log('response')
  			cb()
  		})
  		.catch(err => {

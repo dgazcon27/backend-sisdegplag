@@ -13,7 +13,13 @@
     }
   },
   "validations": [],
-  "relations": {},
+  "relations": {
+     "statistics": {
+      "type": "hasOne",
+      "model": "statistics",
+      "foreignKey": "documentsId"
+    }
+  },
   "acls": [],
   "methods": {}
 }
