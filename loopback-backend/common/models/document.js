@@ -30,48 +30,11 @@ module.exports = function(Document) {
 					if (err) { 
 						console.log(err) 
 					} else {
-						promise.all([readDocument(file.name),fetchDocuments(file.name)])
-						.then(documents => {
-							var response = {}
-							if (documents[0].text.length > 0 && documents[1].length > 0) {
-								promise.all([
-									nGramMethod(documents[0], documents[1]),
-									lcsMethod(documents[0], documents[1]),
-									vectorialModelFunction(documents[0], documents[1])
-								])
-								.then(rsp => {
-									// let result = [];
-									let obj = {
-										ngram: rsp[0][0].ngrams,
-										lcs: rsp[1][0].lcs,
-										vectorialM: rsp[2][0].vectorialM,
-										text: rsp[0][0].suspect
-									}
-									// result.push(obj)
-									for (var i = 1; i < documents[1].length; i++) {
-										let media1 = (obj.ngram+obj.lcs+obj.vec)/3
-										let media2 = (rsp[0][i].ngram+rsp[0][i].lcs+rsp[0][i].vec)/3
-										if (media2 > media1) {
-											obj = {
-												ngram: rsp[0][i].ngrams,
-												lcs: rsp[1][i].lcs,
-												vectorialM: rsp[2][i].vectorialM,
-												text: rsp[0][0].suspect
-											}
-										}
-									}
-									promise.resolve(bayesianMethod(obj, documents[1]))
-									.then(res=>cb(null, res))
-									.catch(error => cb(error,null))
-
-								})
-								.catch(er => cb(er,null))
-							} else {
-								response = rs
-								cb(null, obj)
-							}
+						promise.resolve(compareText(obj))
+						.then(res => {
+							cb(null, res)
 						})
-						.catch(err => cb(err, null))
+						.catch(res => cb(err, null))
 					}
 				});
 			}
@@ -105,7 +68,8 @@ module.exports = function(Document) {
 					let lengthText = textInserted.length;
 					resol({
 						lcs: (lcs/lenCompare)*100,
-						suspect:item.url
+						suspect:item.url,
+						id: item.id
 					})
 				})
 			});
@@ -148,8 +112,9 @@ module.exports = function(Document) {
 					let lenUnique = unique.length;
 					let lenUnion = union.length;
 					resol({
-						ngrams: (lenUnique/lenUnion)*100,
-						suspect: item.url
+						ngram: (lenUnique/lenUnion)*100,
+						suspect: item.url,
+						id: item.id
 					})
 				})
 			});
@@ -208,7 +173,8 @@ module.exports = function(Document) {
 					result = ((denominator/(Math.sqrt(factorA)*Math.sqrt(factorB))).toFixed(4))*100;
 					resol({
 						vectorialM: result,
-						text: item.url
+						text: item.url,
+						id: item.id
 					})
 
 				})
@@ -224,27 +190,107 @@ module.exports = function(Document) {
 		return defer;
 	}
 
-	function compareText() {
+	function compareText(fileUploaded) {
+		// Buscar el resto de los documentos desde aqui
+		var Statistics = app.models.Statistics;
 		var defer = new promise((resolve, reject)=> {
-
+			promise.all([readDocument(fileUploaded),fetchDocuments(fileUploaded.url)])
+			.then(documents => {
+				var response = {}
+				if (documents[0].text.length > 0 && documents[1].length > 0) {
+					promise.all([
+						lcsMethod(documents[0], documents[1]),
+						nGramMethod(documents[0], documents[1]),
+						vectorialModelFunction(documents[0], documents[1])
+					])
+					.then(rsp => {
+						let obj = {
+							lcs: rsp[0][0].lcs,
+							ngram: rsp[1][0].ngram,
+							vectorialM: rsp[2][0].vectorialM,
+							text: rsp[0][0].suspect,
+							id:rsp[0][0].id
+						}
+						for (var i = 1; i < documents[1].length; i++) {
+							let media1 = (obj.ngram+obj.lcs+obj.vectorialM)/3
+							let media2 = (rsp[1][i].ngram+rsp[0][i].lcs+rsp[2][i].vectorialM)/3
+							if (media2 > media1) {
+								obj = {
+									lcs: rsp[0][i].lcs,
+									ngrams: rsp[1][i].ngram,
+									vectorialM: rsp[2][i].vectorialM,
+									text: rsp[0][i].suspect,
+									id:rsp[0][i].id
+								}
+							}
+						}
+						promise.resolve(bayesianMethod(obj, documents[1]))
+						.then(res=>resolve(res))
+						.catch(error => resolve(error))
+					})
+					.catch(er => resolve(er))
+				} else {
+					// crear resultado como no plagiado
+					// primer archivo guardado
+					Statistics.create({
+						ngram:"0",
+						lcs:"0",
+						vectorialModel:"0",
+						type:'no_plagiado',
+						documentsId:documents[0].id
+					}, 
+					function (err, res) {
+						if (err) {
+							reject(err)
+						} else {
+							resolve()
+						}
+					})
+				}
+			})
+			.catch(err => reject(err))
 		});
 
 		return defer;
+		
 	}
 
+	// Regresa una respuesta diciendo si es plagiado o no_plagiado
 	function bayesianMethod(result, documents) {
-		console.log(result)
 		var defer = new promise((resolve, reject)=>{
+			countPl = {
+				ngram: 0,
+				lcs: 0,
+				vectorial: 0,
+			}
+			countNoPl = {
+				ngram: 0,
+				lcs: 0,
+				vectorial: 0,
+			}
+			condition = {
+				ngram: result.ngram < 30 : 'low' ? 'high',
+				lcs: result.lcs < 30 : 'low' ? 'high',
+				vectorial: result.vectorial < 30 : 'low' ? 'high',
+			}
+			let type = ['plagiado', 'no_plagiado'];
+			type.map(item => {
+				documents.map(it => {
+					if
+				})
+			})
+
+			
 			resolve()
 		})
 
 		return defer;
 	}
 
-	function readDocument(url) {
+	function readDocument(item) {
 		var defer = new promise((resolve, reject) => {
 			var extract = require('pdf-text-extract')
-			extract(rootDoc+url, function (err, pages) {
+			extract(rootDoc+item.url, function (err, pages) {
 				if (err) {
 					console.dir(err)
 					reject(err)
@@ -264,7 +310,8 @@ module.exports = function(Document) {
 					}
 				}
 				doc.text = elements;
-				doc.url = url
+				doc.url = item.url;
+				doc.id = item.id;
 				resolve(doc)
 			})
 		})
@@ -301,11 +348,14 @@ module.exports = function(Document) {
 				} else {
 					if (documents.length > 0) {
 						var promisesList = documents.map(it => {
-							return readDocument(it.url)
+							return readDocument(it)
 						})
 						
 						promise.all(promisesList)
 						.then(list => {
+							for (var i = 0; i < list.length; i++) {
+								list[i].statistics = documents[0].__data.statistics;
+							}
 							resolve(list)
 						})
 						.catch(err => reject(err))
