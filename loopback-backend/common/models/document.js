@@ -193,7 +193,7 @@ module.exports = function(Document) {
 	function compareText(fileUploaded) {
 		// Buscar el resto de los documentos desde aqui
 		var Statistics = app.models.Statistics;
-		var defer = new promise((resolve, reject)=> {
+		var defer = new promise((resl, reject)=> {
 			promise.all([readDocument(fileUploaded),fetchDocuments(fileUploaded.url)])
 			.then(documents => {
 				var response = {}
@@ -206,10 +206,11 @@ module.exports = function(Document) {
 					.then(rsp => {
 						let obj = {
 							lcs: rsp[0][0].lcs,
-							ngram: rsp[1][0].ngram,
+							ngrams: rsp[1][0].ngram,
 							vectorialM: rsp[2][0].vectorialM,
 							text: rsp[0][0].suspect,
-							id:rsp[0][0].id
+							id:rsp[0][0].id,
+							documentId: documents[0].id
 						}
 						for (var i = 1; i < documents[1].length; i++) {
 							let media1 = (obj.ngram+obj.lcs+obj.vectorialM)/3
@@ -220,15 +221,21 @@ module.exports = function(Document) {
 									ngrams: rsp[1][i].ngram,
 									vectorialM: rsp[2][i].vectorialM,
 									text: rsp[0][i].suspect,
-									id:rsp[0][i].id
+									id:rsp[0][i].id,
+									documentId: documents[0].id
 								}
 							}
 						}
 						promise.resolve(bayesianMethod(obj, documents[1]))
-						.then(res=>resolve(res))
-						.catch(error => resolve(error))
+						.then(res=>{
+							resl(res)
+						})
+						.catch(error => {
+							console.log(error)
+							reject(error)
+						})
 					})
-					.catch(er => resolve(er))
+					.catch(er => reject(er))
 				} else {
 					// crear resultado como no plagiado
 					// primer archivo guardado
@@ -257,33 +264,115 @@ module.exports = function(Document) {
 
 	// Regresa una respuesta diciendo si es plagiado o no_plagiado
 	function bayesianMethod(result, documents) {
+		var Statistics = app.models.Statistics;
+
 		var defer = new promise((resolve, reject)=>{
-			countPl = {
-				ngram: 0,
-				lcs: 0,
-				vectorial: 0,
+			let numberOfClass = 6;
+			let countPl = new Array(numberOfClass);
+			let countNoPl = new Array(numberOfClass);
+
+			for (var i = 0; i < numberOfClass; i++) {
+				countPl[i] = 1 ;
+				countNoPl[i] = 1;
 			}
-			countNoPl = {
-				ngram: 0,
-				lcs: 0,
-				vectorial: 0,
+			let mediaPl = 0;
+			let mediaNoPl = 0;
+
+			documents.forEach(item => {
+				if (item.statistics.type == 'plagiado') {
+
+					if (parseFloat(item.statistics.ngram) < 30) {
+						countPl[0] += 1
+					} else {
+						countPl[1] += 1
+					}
+					if (parseFloat(item.statistics.lcs) < 30) {
+						countPl[2] += 1
+					} else {
+						countPl[3] += 1
+					}
+					if (parseFloat(item.statistics.vectorialModel) < 30) {
+						countPl[4] += 1
+					} else {
+						countPl[5] += 1
+					}
+					mediaPl++;
+				} else {
+					if (parseFloat(item.statistics.ngram) < 30) {
+						countNoPl[0] += 1
+					} else {
+						countNoPl[1] += 1
+					}
+					if (parseFloat(item.statistics.lcs) < 30) {
+						countNoPl[2] += 1
+					} else {
+						countNoPl[3] += 1
+					}
+					if (parseFloat(item.statistics.vectorialModel) < 30) {
+						countNoPl[4] += 1
+					} else {
+						countNoPl[5] += 1
+					}
+					mediaNoPl++;
+				}
+			})
+			mediaPl = (mediaPl/documents.length).toFixed(4);
+			mediaNoPl = (mediaNoPl/documents.length).toFixed(4);
+			let laplPl = 0;
+			let laplNopl = 0;
+			for (var i = 0; i < numberOfClass; i++) {
+				laplPl += countPl[i];
+				laplNopl += countNoPl[i];
 			}
-			condition = {
-				ngram: result.ngram < 30 : 'low' ? 'high',
-				lcs: result.lcs < 30 : 'low' ? 'high',
-				vectorial: result.vectorial < 30 : 'low' ? 'high',
+			for (var i = 0; i < numberOfClass; i++) {
+				countPl[i] = (countPl[i]/laplPl).toFixed(4);
+				countNoPl[i] = (countNoPl[i]/laplNopl).toFixed(4);
 			}
-			let type = ['plagiado', 'no_plagiado'];
-			type.map(item => {
-				documents.map(it => {
-					if
+
+			if (parseFloat(result.ngrams) < 30) {
+				mediaPl *= countPl[0]
+				mediaNoPl *= countNoPl[0]
+			} else {
+				mediaPl *= countPl[1]
+				mediaNoPl *= countNoPl[1]
+			}
+			if (parseFloat(result.lcs) < 30) {
+
+				mediaPl *= countPl[2]
+				mediaNoPl *= countNoPl[2]
+			} else {
+				mediaPl *= countPl[3]
+				mediaNoPl *= countNoPl[3]
+			}
+			if (parseFloat(result.vectorialM) < 30) {
+				mediaPl *= countPl[4]
+				mediaNoPl *= countNoPl[4]
+			} else {
+				mediaPl *= countPl[5]
+				mediaNoPl *= countNoPl[5]
+			}
+
+			let type = mediaPl > mediaNoPl ? 'plagiado' : 'no_plagiado';
+			console.log(result)
+			new promise((rs, rj) => {
+				Statistics.create({
+					ngram:result.ngrams,
+					lcs:result.lcs,
+					vectorialModel:result.vectorialM,
+					type:type,
+					documentsId:result.documentId
+				}, 
+				function (err, res) {
+					if (err) {
+						rj(err)
+					} else {
+						rs()
+					}
 				})
 			})
-
-			
-			resolve()
+			.then(() => resolve())
+			.catch(err => reject(err))
 		})
-
 		return defer;
 	}
 
@@ -354,7 +443,7 @@ module.exports = function(Document) {
 						promise.all(promisesList)
 						.then(list => {
 							for (var i = 0; i < list.length; i++) {
-								list[i].statistics = documents[0].__data.statistics;
+								list[i].statistics = documents[i].__data.statistics;
 							}
 							resolve(list)
 						})
