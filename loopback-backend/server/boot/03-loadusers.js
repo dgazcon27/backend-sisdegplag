@@ -16,16 +16,16 @@ module.exports = function(app) {
         var ACL = app.models.ACL
         User.findOrCreate({
             where:{
-                username: 'deadline'
+                username: 'dgazcon'
             }
         },{
-            email: 'deadline@deadlinestudio.co',
-            username: 'deadline',
-            password: 'deadline',
-            firstName: 'Deadline',
-            lastName: 'Studio',
-            taxId: 'J-1242356346',
-            birthDate: '2000-01-01',
+            email: 'daniel.gazcon27@gmail.com',
+            username: 'dgazcon',
+            password: 'dgazcon27',
+            firstName: 'Daniel',
+            lastName: 'Gazcon',
+            taxId: 'V-22556518',
+            birthDate: '1992-07-10',
         },function (err, user, created) {
             if (err) {return console.log(err)}
 

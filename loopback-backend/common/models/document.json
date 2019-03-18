@@ -14,10 +14,15 @@
   },
   "validations": [],
   "relations": {
-     "statistics": {
+    "statistics": {
       "type": "hasOne",
       "model": "statistics",
       "foreignKey": "documentsId"
+    },
+    "suspects": {
+      "type": "hasOne",
+      "model": "statistics",
+      "foreignKey": "suspectId"
     }
   },
   "acls": [],

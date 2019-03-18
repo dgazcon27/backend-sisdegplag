@@ -18,7 +18,19 @@ module.exports = function(Document) {
 	Document.upload = function (req, res, cb) {
 		var Container = app.models.Container;
 		var error;
-		Container.upload(req, res, { container: 'documents' }, 
+		Container.upload(req, res, { 
+			container: 'documents',
+			getFilename: function(fileInfo, req, res) {
+				var origFilename = fileInfo.name;
+				// optimisticly get the extension
+				var parts = origFilename.split('.'),
+				extension = parts[parts.length-1];
+
+				// Using a local timestamp + user id in the filename (you might want to change this)
+				var newFilename = (new Date()).getTime()+'_file.'+extension;
+				return newFilename;
+			} 
+		}, 
 			function (err, rs) {
 			if (err) {
 				cb(err, null)
@@ -31,9 +43,7 @@ module.exports = function(Document) {
 						console.log(err) 
 					} else {
 						promise.resolve(compareText(obj))
-						.then(res => {
-							cb(null, res)
-						})
+						.then(ressp => cb(null, ressp))
 						.catch(res => cb(err, null))
 					}
 				});
@@ -209,7 +219,7 @@ module.exports = function(Document) {
 							ngrams: rsp[1][0].ngram,
 							vectorialM: rsp[2][0].vectorialM,
 							text: rsp[0][0].suspect,
-							id:rsp[0][0].id,
+							suspectId:rsp[0][0].id,
 							documentId: documents[0].id
 						}
 						for (var i = 1; i < documents[1].length; i++) {
@@ -221,17 +231,16 @@ module.exports = function(Document) {
 									ngrams: rsp[1][i].ngram,
 									vectorialM: rsp[2][i].vectorialM,
 									text: rsp[0][i].suspect,
-									id:rsp[0][i].id,
+									suspectId:rsp[0][i].id,
 									documentId: documents[0].id
 								}
 							}
 						}
 						promise.resolve(bayesianMethod(obj, documents[1]))
 						.then(res=>{
-							resl(res)
+ 							resl(res)
 						})
 						.catch(error => {
-							console.log(error)
 							reject(error)
 						})
 					})
@@ -244,13 +253,14 @@ module.exports = function(Document) {
 						lcs:"0",
 						vectorialModel:"0",
 						type:'no_plagiado',
+						suspectId:0,
 						documentsId:documents[0].id
 					}, 
 					function (err, res) {
 						if (err) {
 							reject(err)
 						} else {
-							resolve()
+							resl ()
 						}
 					})
 				}
@@ -353,13 +363,13 @@ module.exports = function(Document) {
 			}
 
 			let type = mediaPl > mediaNoPl ? 'plagiado' : 'no_plagiado';
-			console.log(result)
 			new promise((rs, rj) => {
 				Statistics.create({
 					ngram:result.ngrams,
 					lcs:result.lcs,
 					vectorialModel:result.vectorialM,
 					type:type,
+					suspectId: result.suspectId,
 					documentsId:result.documentId
 				}, 
 				function (err, res) {
@@ -370,7 +380,7 @@ module.exports = function(Document) {
 					}
 				})
 			})
-			.then(() => resolve())
+			.then(response => resolve(result))
 			.catch(err => reject(err))
 		})
 		return defer;
