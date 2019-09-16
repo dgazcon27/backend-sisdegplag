@@ -294,12 +294,28 @@ module.exports = function (User) {
     });
   };
 
+  User.getCurrent = function getCurrent(cb) {
+    var userId = loopback.request.getUserId();
+    cb({id:userId})
+  }
 
   function busquedaStr(item) {
     return item.firstName.toUpperCase().includes(this) || item.lastName.toUpperCase().includes(this)
   }
 
 
+   User.remoteMethod(
+    'getCurrent', {
+      http: {
+        path: '/getCurrent',
+        verb: 'get'
+      },
+      returns: {
+        type: 'object',
+        root: true
+      },
+      description: 'Get Current user'
+  });
 
   User.remoteMethod('setGuard', {
     accepts: [

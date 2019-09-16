@@ -3,11 +3,26 @@
   "plural": "documents",
   "base": "PersistedModel",
   "idInjection": true,
+  "mixins": {
+    "TimeStamp": {
+      "required": false,
+      "validateUpsert": true,
+      "silenceWarnings": false
+    }
+  },
   "options": {
     "validateUpsert": true
   },
   "properties": {
     "url": {
+      "type": "string",
+      "required": true
+    },
+    "name": {
+      "type": "string",
+      "required": true
+    },
+    "createdBy": {
       "type": "string",
       "required": true
     }
@@ -23,6 +38,10 @@
       "type": "hasOne",
       "model": "statistics",
       "foreignKey": "suspectId"
+    },
+    "owner": {
+      "type": "hasOne",
+      "model": "user"
     }
   },
   "acls": [],

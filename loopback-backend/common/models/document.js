@@ -15,7 +15,7 @@ module.exports = function(Document) {
 	/* Remote Hooks */
 	/* Create a Image data after upload an image */
 
-	Document.upload = function (req, res, cb) {
+	Document.upload = function (id, req, res, cb) {
 		var Container = app.models.Container;
 		var error;
 		Container.upload(req, res, { 
@@ -25,7 +25,6 @@ module.exports = function(Document) {
 				// optimisticly get the extension
 				var parts = origFilename.split('.'),
 				extension = parts[parts.length-1];
-
 				// Using a local timestamp + user id in the filename (you might want to change this)
 				var newFilename = (new Date()).getTime()+'_file.'+extension;
 				return newFilename;
@@ -37,7 +36,9 @@ module.exports = function(Document) {
 			} else {
 				var file = rs.files.document[0];
 				Document.create({
-					url: file.name
+					url: file.name,
+					name: file.originalFilename,
+					createdBy: id
 				}, function (err, obj) {
 					if (err) { 
 						console.log(err) 
@@ -222,9 +223,9 @@ module.exports = function(Document) {
 							suspectId:rsp[0][0].id,
 							documentId: documents[0].id
 						}
-						for (var i = 1; i < documents[1].length; i++) {
-							let media1 = (obj.ngram+obj.lcs+obj.vectorialM)/3
-							let media2 = (rsp[1][i].ngram+rsp[0][i].lcs+rsp[2][i].vectorialM)/3
+						for (var i = 0; i < documents[1].length; i++) {
+							let media1 = (obj.ngrams+obj.lcs+obj.vectorialM)/3;
+							let media2 = (rsp[1][i].ngram+rsp[0][i].lcs+rsp[2][i].vectorialM)/3;
 							if (media2 > media1) {
 								obj = {
 									lcs: rsp[0][i].lcs,
@@ -275,7 +276,6 @@ module.exports = function(Document) {
 	// Regresa una respuesta diciendo si es plagiado o no_plagiado
 	function bayesianMethod(result, documents) {
 		var Statistics = app.models.Statistics;
-
 		var defer = new promise((resolve, reject)=>{
 			let numberOfClass = 6;
 			let countPl = new Array(numberOfClass);
@@ -571,6 +571,38 @@ module.exports = function(Document) {
  		})
 	}
 
+	Document.getDocuments = function getDocuments(cb) {
+		Document.find({
+			include: 'statistics'
+		}, function(err, docs) {
+			if (err) {
+				cb(err, null)
+			} else {
+				let item = {}
+				let response = docs.map(dc => {
+					item = Object.assign({}, dc.__data);
+					item.url = rootDoc+dc.url
+					return item;
+				}) 
+				cb(null, response)
+			}
+		});
+	}
+
+	Document.remoteMethod('getDocuments',{
+		http: { 
+			path: '/getDocuments', 
+			verb: 'get' 
+		},
+		accepts: [
+		],
+		returns: { 
+			arg: 'response', 
+			type: 'object',
+			root: 'true'
+		}
+	});
+
 	Document.remoteMethod('test',{
 		http: { 
 			path: '/test', 
@@ -586,10 +618,11 @@ module.exports = function(Document) {
 
 	Document.remoteMethod('upload',{
 		http: { 
-			path: '/upload', 
+			path: '/upload/:id', 
 			verb: 'post' 
 		},
 		accepts: [
+			{ arg: 'id', type: 'string'},
 			{ arg: 'req', type: 'object', 'http': { source: 'req' } },
 			{ arg: 'res', type: 'object', 'http': { source: 'res' } }
 		],
