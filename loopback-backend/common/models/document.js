@@ -15,6 +15,58 @@ module.exports = function(Document) {
 	/* Remote Hooks */
 	/* Create a Image data after upload an image */
 
+	Document.uploadText = function (text, cb) {
+		let search = splitTerms(text)
+		promise.resolve(fetchDocuments(null))
+		.then(res => {
+			promise.all([
+				lcsMethod(search, res),
+				nGramMethod(search, res),
+				vectorialModelFunction(search, res)
+			])
+			.then(response => {
+				
+				let result = calculateMedia(res.length, response, 100);
+				console.log(result);
+				cb(null, {})
+			})
+			.catch(err => cb(404, null) )
+
+		})
+		.catch(err => {
+			console.log(err)
+			cb(404, null);
+		})
+	}
+
+	function calculateMedia(nDocs, iinitial, loaded = 'none') {
+		let obj = {
+			lcs: iinitial[0][0].lcs,
+			ngrams: iinitial[1][0].ngram,
+			vectorialM: iinitial[2][0].vectorialM,
+			text: iinitial[0][0].suspect,
+			suspectId:iinitial[0][0].id,
+			documentId: loaded
+		}
+
+		for (var i = 0; i < nDocs; i++) {
+			let media1 = (obj.ngrams+obj.lcs+obj.vectorialM)/3;
+			let media2 = (iinitial[1][i].ngram+iinitial[0][i].lcs+iinitial[2][i].vectorialM)/3;
+			if (media2 > media1) {
+				obj = {
+					lcs: iinitial[0][i].lcs,
+					ngrams: iinitial[1][i].ngram,
+					vectorialM: iinitial[2][i].vectorialM,
+					text: iinitial[0][i].suspect,
+					suspectId:iinitial[0][i].id,
+					documentId: loaded
+				}
+			}
+		}
+
+		return obj;
+	}
+
 	Document.upload = function (id, req, res, cb) {
 		var Container = app.models.Container;
 		var error;
@@ -418,6 +470,20 @@ module.exports = function(Document) {
 		return defer;
 	}
 
+	function splitTerms(text) {
+		let elements = [];
+		var splitted = text
+			.toLowerCase()
+			.replace(/\t|\n|\,|\.|\:|\;|\(|\)|\{|\}|\?|\¿|\"|\-|\]|\[/g,' ')
+			.split(" ")
+			for (var j = 0; j < splitted.length; j++) {
+				if (splitted[j].trim() != '' && splitted[j] != undefined) {
+					elements.push(splitted[j])
+				}
+			}
+		return {text: elements};
+	}
+
 	function removeStopWords(array) {
 		var obj = Object.assign(array,{})
 		var regex = require('../shared/regex-expresion')
@@ -499,19 +565,6 @@ module.exports = function(Document) {
 		return out;
 	}
 
-	function printRows(rows) {
-		var defer = new promise((resolve, reject)=> {
-			var text = ''
-			Object.keys(rows) // => array of y-positions (type: float)
-			.sort((y1, y2) => parseFloat(y1) - parseFloat(y2)) // sort float positions
-			.forEach((y) => {
-				text += (rows[y] || []).join('')
-			});
-			resolve(text)
-		})
-		return defer;
-	}
-
 	function generateNgrams(n, text) {
 		// number of ngrams
 		var x = text.length - (n-1);
@@ -526,21 +579,6 @@ module.exports = function(Document) {
 		}
 		return ngram;
 
- 	}
-
- 	function writeArray(matriz, textName) {
-		var fs = require('fs');
-		var urlText = rootDoc+textName+'.txt';
-		var stream = fs.createWriteStream(urlText);
-		stream.once('open', function(fd) {
-			stream.write('==========================')
-			stream.write(textName)
-			stream.write('==========================\n')
-			for (var i = 0; i < matriz.length; i++) {
-				stream.write(matriz[i]+' \n')
-			}
-			stream.end();
-		});
  	}
 
  	function initializeArray(leng1, leng2) {
@@ -558,18 +596,6 @@ module.exports = function(Document) {
  		}
  		return matriz;
  	}
-
- 	Document.test = function test(cb) {
- 		promise.resolve(bayesianMethod())
- 		.then(res => {
- 			console.log('response')
- 			cb()
- 		})
- 		.catch(err => {
- 			console.log(err)
- 			cb()
- 		})
-	}
 
 	Document.getDocuments = function getDocuments(cb) {
 		Document.find({
@@ -603,16 +629,17 @@ module.exports = function(Document) {
 		}
 	});
 
-	Document.remoteMethod('test',{
-		http: { 
-			path: '/test', 
-			verb: 'get' 
+	Document.remoteMethod('uploadText', {
+		http: {
+			path: '/upload-text/:text',
+			verb: 'post'
 		},
 		accepts: [
+			{ arg: 'text', type: 'string'}
 		],
-		returns: { 
-			arg: 'response', 
-			type: 'object',
+		returns:{
+			arg: 'response',
+			type: 'object'
 		}
 	});
 
