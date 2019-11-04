@@ -15,38 +15,14 @@ module.exports = function(Document) {
 	/* Remote Hooks */
 	/* Create a Image data after upload an image */
 
-	Document.uploadText = function (text, cb) {
-		let search = splitTerms(text)
-		promise.resolve(fetchDocuments(null))
-		.then(res => {
-			promise.all([
-				lcsMethod(search, res),
-				nGramMethod(search, res),
-				vectorialModelFunction(search, res)
-			])
-			.then(response => {
-				
-				let result = calculateMedia(res.length, response, 100);
-				console.log(result);
-				cb(null, {})
-			})
-			.catch(err => cb(404, null) )
-
-		})
-		.catch(err => {
-			console.log(err)
-			cb(404, null);
-		})
-	}
-
-	function calculateMedia(nDocs, iinitial, loaded = 'none') {
+	function calculateMedia(nDocs, iinitial, documentId = 'none') {
 		let obj = {
 			lcs: iinitial[0][0].lcs,
 			ngrams: iinitial[1][0].ngram,
 			vectorialM: iinitial[2][0].vectorialM,
 			text: iinitial[0][0].suspect,
 			suspectId:iinitial[0][0].id,
-			documentId: loaded
+			documentId: documentId
 		}
 
 		for (var i = 0; i < nDocs; i++) {
@@ -59,7 +35,7 @@ module.exports = function(Document) {
 					vectorialM: iinitial[2][i].vectorialM,
 					text: iinitial[0][i].suspect,
 					suspectId:iinitial[0][i].id,
-					documentId: loaded
+					documentId: documentId
 				}
 			}
 		}
@@ -67,41 +43,28 @@ module.exports = function(Document) {
 		return obj;
 	}
 
-	Document.upload = function (id, req, res, cb) {
-		var Container = app.models.Container;
-		var error;
-		Container.upload(req, res, { 
-			container: 'documents',
-			getFilename: function(fileInfo, req, res) {
-				var origFilename = fileInfo.name;
-				// optimisticly get the extension
-				var parts = origFilename.split('.'),
-				extension = parts[parts.length-1];
-				// Using a local timestamp + user id in the filename (you might want to change this)
-				var newFilename = (new Date()).getTime()+'_file.'+extension;
-				return newFilename;
-			} 
-		}, 
-			function (err, rs) {
-			if (err) {
-				cb(err, null)
-			} else {
-				var file = rs.files.document[0];
-				Document.create({
-					url: file.name,
-					name: file.originalFilename,
-					createdBy: id
-				}, function (err, obj) {
-					if (err) { 
-						console.log(err) 
+
+	function createStatistics(object, type) {
+		var Statistics = app.models.Statistics;
+		let defer = new promise((response, reject) => {
+			Statistics.create({
+					ngram:object.ngrams,
+					lcs:object.lcs,
+					vectorialModel:object.vectorialM,
+					type:type,
+					suspectId: object.suspectId,
+					documentsId:object.documentId
+				}, 
+				function (err, res) {
+					if (err) {
+						reject(err)
 					} else {
-						promise.resolve(compareText(obj))
-						.then(ressp => cb(null, ressp))
-						.catch(res => cb(err, null))
+						response(res)
 					}
-				});
-			}
-		})
+				})
+		});
+
+		return defer;
 	}
 
 	function lcsMethod(compare, toCompare) {
@@ -130,7 +93,7 @@ module.exports = function(Document) {
 					let lenCompare = textCompared.length;
 					let lengthText = textInserted.length;
 					resol({
-						lcs: (lcs/lenCompare)*100,
+						lcs: ((lcs/lenCompare)*100).toFixed(6),
 						suspect:item.url,
 						id: item.id
 					})
@@ -175,7 +138,7 @@ module.exports = function(Document) {
 					let lenUnique = unique.length;
 					let lenUnion = union.length;
 					resol({
-						ngram: (lenUnique/lenUnion)*100,
+						ngram: ((lenUnique/lenUnion)*100).toFixed(6),
 						suspect: item.url,
 						id: item.id
 					})
@@ -233,7 +196,7 @@ module.exports = function(Document) {
 						factorA += Math.pow(vectorialResult2[i], 2);
 						factorB += Math.pow(vectorialResult1[i], 2);
 					}
-					result = ((denominator/(Math.sqrt(factorA)*Math.sqrt(factorB))).toFixed(4))*100;
+					result = ((denominator/(Math.sqrt(factorA)*Math.sqrt(factorB))).toFixed(6))*100;
 					resol({
 						vectorialM: result,
 						text: item.url,
@@ -267,33 +230,23 @@ module.exports = function(Document) {
 						vectorialModelFunction(documents[0], documents[1])
 					])
 					.then(rsp => {
-						let obj = {
-							lcs: rsp[0][0].lcs,
-							ngrams: rsp[1][0].ngram,
-							vectorialM: rsp[2][0].vectorialM,
-							text: rsp[0][0].suspect,
-							suspectId:rsp[0][0].id,
-							documentId: documents[0].id
-						}
-						for (var i = 0; i < documents[1].length; i++) {
-							let media1 = (obj.ngrams+obj.lcs+obj.vectorialM)/3;
-							let media2 = (rsp[1][i].ngram+rsp[0][i].lcs+rsp[2][i].vectorialM)/3;
-							if (media2 > media1) {
-								obj = {
-									lcs: rsp[0][i].lcs,
-									ngrams: rsp[1][i].ngram,
-									vectorialM: rsp[2][i].vectorialM,
-									text: rsp[0][i].suspect,
-									suspectId:rsp[0][i].id,
-									documentId: documents[0].id
-								}
-							}
-						}
+
+						let obj = calculateMedia(documents[1].length, rsp, documents[0].id);
+
 						promise.resolve(bayesianMethod(obj, documents[1]))
 						.then(res=>{
- 							resl(res)
+							// create statistics
+ 							promise.resolve(createStatistics(obj, res))
+ 							.then(statistics => {
+ 								resl(statistics)
+ 							})
+ 							.catch(err => {
+ 								console.log(err)
+ 								reject(err)
+ 							})
 						})
 						.catch(error => {
+							console.log(error)
 							reject(error)
 						})
 					})
@@ -341,41 +294,46 @@ module.exports = function(Document) {
 			let mediaNoPl = 0;
 
 			documents.forEach(item => {
-				if (item.statistics.type == 'plagiado') {
+				try {
+					if (item.statistics.type == 'plagiado') {
 
-					if (parseFloat(item.statistics.ngram) < 30) {
-						countPl[0] += 1
+						if (parseFloat(item.statistics.ngram) < 30) {
+							countPl[0] += 1
+						} else {
+							countPl[1] += 1
+						}
+						if (parseFloat(item.statistics.lcs) < 30) {
+							countPl[2] += 1
+						} else {
+							countPl[3] += 1
+						}
+						if (parseFloat(item.statistics.vectorialModel) < 30) {
+							countPl[4] += 1
+						} else {
+							countPl[5] += 1
+						}
+						mediaPl++;
 					} else {
-						countPl[1] += 1
+						if (parseFloat(item.statistics.ngram) < 30) {
+							countNoPl[0] += 1
+						} else {
+							countNoPl[1] += 1
+						}
+						if (parseFloat(item.statistics.lcs) < 30) {
+							countNoPl[2] += 1
+						} else {
+							countNoPl[3] += 1
+						}
+						if (parseFloat(item.statistics.vectorialModel) < 30) {
+							countNoPl[4] += 1
+						} else {
+							countNoPl[5] += 1
+						}
+						mediaNoPl++;
 					}
-					if (parseFloat(item.statistics.lcs) < 30) {
-						countPl[2] += 1
-					} else {
-						countPl[3] += 1
-					}
-					if (parseFloat(item.statistics.vectorialModel) < 30) {
-						countPl[4] += 1
-					} else {
-						countPl[5] += 1
-					}
-					mediaPl++;
-				} else {
-					if (parseFloat(item.statistics.ngram) < 30) {
-						countNoPl[0] += 1
-					} else {
-						countNoPl[1] += 1
-					}
-					if (parseFloat(item.statistics.lcs) < 30) {
-						countNoPl[2] += 1
-					} else {
-						countNoPl[3] += 1
-					}
-					if (parseFloat(item.statistics.vectorialModel) < 30) {
-						countNoPl[4] += 1
-					} else {
-						countNoPl[5] += 1
-					}
-					mediaNoPl++;
+				} catch(e) {
+					// statements
+					console.log(e);
 				}
 			})
 			mediaPl = (mediaPl/documents.length).toFixed(4);
@@ -415,25 +373,8 @@ module.exports = function(Document) {
 			}
 
 			let type = mediaPl > mediaNoPl ? 'plagiado' : 'no_plagiado';
-			new promise((rs, rj) => {
-				Statistics.create({
-					ngram:result.ngrams,
-					lcs:result.lcs,
-					vectorialModel:result.vectorialM,
-					type:type,
-					suspectId: result.suspectId,
-					documentsId:result.documentId
-				}, 
-				function (err, res) {
-					if (err) {
-						rj(err)
-					} else {
-						rs()
-					}
-				})
-			})
-			.then(response => resolve(result))
-			.catch(err => reject(err))
+			resolve(type);
+
 		})
 		return defer;
 	}
@@ -614,6 +555,76 @@ module.exports = function(Document) {
 			}
 		});
 	}
+
+	Document.uploadText = function uploadText(text, cb) {
+		let search = splitTerms(text)
+		promise.resolve(fetchDocuments(null))
+		.then(res => {
+			promise.all([
+				lcsMethod(search, res),
+				nGramMethod(search, res),
+				vectorialModelFunction(search, res)
+			])
+			.then(response => {
+				let result = calculateMedia(res.length, response);
+				promise.resolve(bayesianMethod(result, res))
+				.then(resol => {
+					result.type = resol
+					cb(null, result)
+				})
+				.catch(errors => {
+					cb(404, null)
+				})
+			})
+			.catch(err => {
+				console.log(err)
+				cb(404, null) 
+			})
+
+		})
+		.catch(err => {
+			console.log(err)
+			cb(404, null);
+		})
+	}
+	
+	Document.upload = function upload(id, req, res, cb) {
+		var Container = app.models.Container;
+		var error;
+		Container.upload(req, res, { 
+			container: 'documents',
+			getFilename: function(fileInfo, req, res) {
+				var origFilename = fileInfo.name;
+				// optimisticly get the extension
+				var parts = origFilename.split('.'),
+				extension = parts[parts.length-1];
+				// Using a local timestamp + user id in the filename (you might want to change this)
+				var newFilename = (new Date()).getTime()+'_file.'+extension;
+				return newFilename;
+			} 
+		}, 
+			function (err, rs) {
+			if (err) {
+				cb(err, null)
+			} else {
+				var file = rs.files.document[0];
+				Document.create({
+					url: file.name,
+					name: file.originalFilename,
+					createdBy: id
+				}, function (err, obj) {
+					if (err) { 
+						console.log(err) 
+					} else {
+						promise.resolve(compareText(obj))
+						.then(ressp => cb(null, ressp))
+						.catch(res => cb(err, null))
+					}
+				});
+			}
+		})
+	}
+
 
 	Document.remoteMethod('getDocuments',{
 		http: { 
