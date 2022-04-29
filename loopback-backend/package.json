@@ -9,7 +9,7 @@
     "dev": "export NODE_ENV=development && node ."
   },
   "dependencies": {
-    "async": "^2.1.5",
+    "async": "^2.6.4",
     "compression": "^1.0.3",
     "cors": "^2.5.2",
     "goo.gl": "^0.1.4",
